@@ -29,6 +29,8 @@
 /* One set of tokens; light-dark() resolves each against color-scheme, which
    follows the system unless the toggle has pinned it on <html>. */
 :root {
+  /* Height of the sticky masthead, kept in step with its padding below. */
+  --masthead-h: 4rem;
   color-scheme: light dark;
   --paper: light-dark(#f5f2eb, #121210);
   --raised: light-dark(#ece7dc, #1b1a17);
@@ -56,7 +58,8 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
-  scroll-padding-top: 1.5rem;
+  /* Anchored sections land below the sticky masthead, not under it. */
+  scroll-padding-top: calc(var(--masthead-h) + 1.5rem);
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -96,7 +99,7 @@ p { margin: 0; }
   position: absolute;
   left: 1rem;
   top: -4rem;
-  z-index: 2;
+  z-index: 20;
   padding: 0.6rem 1rem;
   background: var(--ink);
   color: var(--paper);
@@ -114,11 +117,20 @@ p { margin: 0; }
 }
 
 /* Masthead */
+/* Stays in view while the page scrolls. The band spans the window so
+   content never shows beside it, and inherits the body's paper and
+   ledger rules so the hairlines run through it unbroken. */
 .masthead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: inherit;
+}
+.masthead-bar {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding-block: 1.25rem;
+  padding-block: 0.75rem;
   border-bottom: 1px solid var(--rule);
 }
 .wordmark {
@@ -155,7 +167,8 @@ p { margin: 0; }
   :root:not([data-theme="light"]) .mode-moon { display: none; }
 }
 @media (max-width: 34rem) {
-  .masthead { flex-wrap: wrap; }
+  :root { --masthead-h: 5rem; }
+  .masthead-bar { flex-wrap: wrap; row-gap: 0; padding-block: 0.5rem 0.25rem; }
   .masthead nav { order: 3; width: 100%; margin-left: 0; }
   .masthead ul { justify-content: space-between; }
   .mode { margin-left: auto; }
