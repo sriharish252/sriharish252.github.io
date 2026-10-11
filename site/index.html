@@ -242,6 +242,10 @@
     <p>Hand-written HTML and CSS. Set in Fraunces and IBM Plex.</p>
   </footer>
 
+  <a class="to-top" href="#top" aria-label="Back to top">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg>
+  </a>
+
   <script>
     (function () {
       var root = document.documentElement;
@@ -261,6 +265,14 @@
         try { localStorage.setItem("theme", next); } catch (e) {}
         label();
       });
+
+      // Back to top appears once the hero has scrolled out of view.
+      var toTop = document.querySelector(".to-top");
+      var hero = document.getElementById("top");
+      if (!("IntersectionObserver" in window)) { toTop.classList.add("is-shown"); return; }
+      new IntersectionObserver(function (entries) {
+        toTop.classList.toggle("is-shown", !entries[0].isIntersecting);
+      }).observe(hero);
     })();
   </script>
 </body>

@@ -389,13 +389,47 @@ figure { margin: 0; }
   justify-content: space-between;
   gap: 0.5rem 2rem;
   margin-top: var(--step);
-  padding-block: 2rem 2.5rem;
+  /* The bottom padding clears the back-to-top button at the end of the page. */
+  padding-block: 2rem 5.5rem;
   border-top: 1px solid var(--rule);
   color: var(--muted);
   font-size: 0.6875rem;
 }
 
+/* Back to top. Hidden with visibility as well as opacity, so it leaves
+   the tab order until the reader has scrolled past the hero. */
+.to-top {
+  position: fixed;
+  right: max(var(--gutter), env(safe-area-inset-right));
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--rule);
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  visibility: hidden;
+  opacity: 0;
+  translate: 0 0.5rem;
+  transition: opacity 0.2s, translate 0.2s, visibility 0s 0.2s;
+}
+.to-top.is-shown {
+  visibility: visible;
+  opacity: 1;
+  translate: 0 0;
+  transition: opacity 0.2s, translate 0.2s, visibility 0s;
+}
+.to-top:hover { border-color: var(--ink); }
+.to-top svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+@media (prefers-reduced-motion: reduce) {
+  .to-top, .to-top.is-shown { translate: none; transition: none; }
+}
+
 @media (forced-colors: active) {
   .button { border: 1px solid ButtonText; }
   .live { forced-color-adjust: none; }
+  .to-top { border-color: ButtonText; }
 }
