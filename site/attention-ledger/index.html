@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attention Ledger | Sri Harish Jayaram</title>
+  <meta name="description" content="A private, self-hosted record of where my time goes across my Windows laptop and iPhone. Its data stays on my own devices and my own iCloud Drive, and it reports only to me.">
+  <link rel="canonical" href="https://sriharish252.github.io/attention-ledger/">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://sriharish252.github.io/attention-ledger/">
+  <meta property="og:title" content="Attention Ledger | Sri Harish Jayaram">
+  <meta property="og:description" content="A private time tracker for my laptop and iPhone, kept on my own devices and my own iCloud Drive.">
+  <meta property="og:image" content="https://sriharish252.github.io/assets/img/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#dceaf0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0c1726" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../assets/fonts/big-shoulders.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../assets/site.css">
+  <script src="../assets/site.js" defer></script>
+  <script src="../assets/attention-ledger.js" defer></script>
+  <script src="../assets/attention-ledger-page.js" defer></script>
+  <script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add("js")</script>
+</head>
+<body class="al-page">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="masthead">
+    <div class="wrap masthead-bar">
+      <a class="wordmark" href="../">Sri Harish Jayaram</a>
+      <nav aria-label="Sections">
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#privacy">Privacy</a></li>
+          <li><a href="#try">Try it</a></li>
+          <li><a href="../#work">All work</a></li>
+        </ul>
+      </nav>
+      <button class="mode" type="button" aria-label="Switch to dark theme" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero wrap" id="top" aria-labelledby="hero-title">
+      <p class="crumb"><a href="../#work"><span aria-hidden="true">&larr;</span> Selected work</a></p>
+      <h1 id="hero-title" class="hero-title">
+        <span class="line"><span>Attention</span></span>
+        <span class="line"><span>Ledger</span></span>
+      </h1>
+      <div class="hero-foot">
+        <div class="hero-intro">
+          <p class="lede">A private record of where my time and attention actually go across my Windows laptop and iPhone. Small collectors on each device write to storage I own, my laptop and my own iCloud Drive, and the only reports it ever produces are exported for me to read.</p>
+          <p class="actions">
+            <a class="button" href="#try">Try the examples</a>
+            <a class="button button-line" href="https://github.com/sriharish252/attention-ledger-overview" rel="noopener">Design notes on GitHub</a>
+          </p>
+        </div>
+        <dl class="hero-facts">
+          <div><dt>Status</dt><dd>In daily use, 2026</dd></div>
+          <div><dt>Runs on</dt><dd>Windows laptop, Chromium browsers, iPhone</dd></div>
+          <div><dt>Data lives</dt><dd>On my laptop and in my own iCloud Drive, nowhere else</dd></div>
+          <div><dt>Source</dt><dd>Private. The design is public; the code and the data stay mine.</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="section wrap split" id="why" aria-labelledby="why-title">
+      <h2 id="why-title" class="section-title">Why</h2>
+      <div class="al-why">
+        <p class="al-big">Screen-time apps tell you how long each app was open. I wanted to know what I was actually doing, when I drifted, and what pulled me away, across both screens at once, without handing a minute-by-minute record of my life to anyone.</p>
+        <div class="areas">
+          <article class="area">
+            <h3>Private by design</h3>
+            <p>No keystrokes, screenshots, audio, message content, full web addresses or raw window titles, ever. Only app names, website domains and cleaned titles for apps I allow.</p>
+          </article>
+          <article class="area">
+            <h3>Only storage I own</h3>
+            <p>A database on my laptop and a folder in my own iCloud Drive. No telemetry, no accounts, no servers, no third-party analytics.</p>
+          </article>
+          <article class="area">
+            <h3>I stay in control</h3>
+            <p>Pause one device or all of them from any of them. Block any app or site, and it is logged only as <em>Private</em> so the day still adds up.</p>
+          </article>
+          <article class="area">
+            <h3>Independent parts</h3>
+            <p>Each collector was built, tested and used on its own device for at least a day before any data was combined.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="how" aria-labelledby="how-title">
+      <h2 id="how-title" class="section-title">How it works</h2>
+
+      <figure class="al-flow al-flow-large" aria-labelledby="al-flow-cap">
+        <div class="al-zone">
+          <p class="al-zone-label"><span class="al-lock" aria-hidden="true"></span>Everything stays inside: my devices and my own iCloud Drive</p>
+          <div class="al-stages">
+            <section class="al-stage" aria-label="Collect">
+              <h3 class="al-stage-title"><span>1</span> Collect</h3>
+              <div class="al-node"><strong>Laptop agent</strong><span>A small Windows tray app: which app is in front, idle time, screen lock, and whether music is playing</span></div>
+              <div class="al-node"><strong>Browser extension</strong><span>Chrome, Edge and other Chromium browsers: the active tab's domain, and tabs playing sound</span></div>
+              <div class="al-node"><strong>iPhone automations</strong><span>A Shortcuts automation per app writes a line when it opens and closes, plus Focus mode and charger changes</span></div>
+            </section>
+            <section class="al-stage" aria-label="Store">
+              <h3 class="al-stage-title"><span>2</span> Store</h3>
+              <div class="al-node"><strong>Database on the laptop</strong><span>The extension hands its events to the agent over the laptop's own loopback address, which never leaves the machine. Raw events are deleted after 30 days</span></div>
+              <div class="al-node"><strong>Private iCloud Drive folder</strong><span>One file per day from the phone, synced to the laptop by iCloud, along with the block list and a shared pause switch</span></div>
+            </section>
+            <section class="al-stage" aria-label="Review">
+              <h3 class="al-stage-title"><span>3</span> Review</h3>
+              <div class="al-node"><strong>One timeline</strong><span>Both devices merged minute by minute, every app and site sorted into categories I choose</span></div>
+              <div class="al-node al-node-out"><strong>Exports, for me</strong><span>A daily report and a spreadsheet of every distraction, written to a folder on my laptop that is never synced or committed anywhere</span></div>
+            </section>
+          </div>
+        </div>
+        <ul class="al-outside" aria-label="What is never involved">
+          <li>No servers</li><li>No accounts</li><li>No telemetry</li><li>No third-party analytics</li>
+        </ul>
+        <figcaption id="al-flow-cap">How the data moves. The only network hop is iCloud syncing my own folder between my own phone and laptop.</figcaption>
+      </figure>
+
+      <div class="al-parts">
+        <article class="al-part">
+          <h3>Laptop agent</h3>
+          <dl>
+            <div><dt>Reads</dt><dd>The foreground window's app, time since the last input (not the input), and whether the screen is locked</dd></div>
+            <div><dt>Never reads</dt><dd>Keys, clicks, screen contents, or a window title unless the app is on my allowlist, and then only a cleaned piece of it</dd></div>
+            <div><dt>Writes to</dt><dd>A database in my Windows profile, exported as one file per day</dd></div>
+            <div><dt>Pause</dt><dd>Tray menu or a hotkey, for this laptop or all devices</dd></div>
+          </dl>
+        </article>
+        <article class="al-part">
+          <h3>Browser extension</h3>
+          <dl>
+            <div><dt>Reads</dt><dd>The active tab's address, reduced to its domain the moment it is seen, and which tabs are playing sound</dd></div>
+            <div><dt>Never reads</dt><dd>Page contents, paths, search terms, or anything from browser pages, local files or local addresses</dd></div>
+            <div><dt>Writes to</dt><dd>The browser's local storage, then the laptop agent. Browser sync is never used</dd></div>
+            <div><dt>Pause</dt><dd>The toolbar popup, for this browser or all devices</dd></div>
+          </dl>
+        </article>
+        <article class="al-part">
+          <h3>iPhone automations</h3>
+          <dl>
+            <div><dt>Reads</dt><dd>That an app opened or closed, plus Focus mode, charger and step-count signals</dd></div>
+            <div><dt>Never reads</dt><dd>Anything inside an app. Apple gives no other app this data, which is why it runs through Shortcuts</dd></div>
+            <div><dt>Writes to</dt><dd>One file per day in my own iCloud Drive, with a local fallback on the phone if iCloud is briefly unavailable</dd></div>
+            <div><dt>Pause</dt><dd>A Home Screen, Control Center or Action Button shortcut</dd></div>
+          </dl>
+        </article>
+        <article class="al-part">
+          <h3>Analysis</h3>
+          <dl>
+            <div><dt>Reads</dt><dd>The day files from both devices, and nothing else</dd></div>
+            <div><dt>Works out</dt><dd>Time on a task, switches per hour, the longest focus stretch, every distraction and phone check</dd></div>
+            <div><dt>Writes to</dt><dd>A report and a spreadsheet file in a folder on my laptop</dd></div>
+            <div><dt>Needs</dt><dd>Python and nothing to install: no packages, no network</dd></div>
+          </dl>
+        </article>
+      </div>
+    </section>
+
+    <section class="section wrap split" id="privacy" aria-labelledby="privacy-title">
+      <h2 id="privacy-title" class="section-title">Where the data lives</h2>
+      <div class="al-privacy">
+        <div class="al-table-wrap">
+          <table class="al-table al-table-lg">
+            <caption>Every place the data exists, and how long it stays</caption>
+            <thead><tr><th scope="col">Where</th><th scope="col">What</th><th scope="col">Kept</th><th scope="col">Who can see it</th></tr></thead>
+            <tbody>
+              <tr><td>Database on my laptop</td><td>Laptop and browser events</td><td>30 days</td><td>Me, on my Windows account</td></tr>
+              <tr><td>The browser's own storage</td><td>A queue for the agent, and its own copy</td><td>7 days</td><td>Me, in that browser profile</td></tr>
+              <tr><td>My iCloud Drive folder</td><td>The phone's day files, the block list, the pause switch</td><td>Until I delete them</td><td>Me, on my Apple account</td></tr>
+              <tr><td>A logs folder on my laptop</td><td>Day files, reports, the distractions spreadsheet, my categories</td><td>Until I delete them</td><td>Me. Ignored by git, so never committed</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="al-record">
+          <div>
+            <h3 class="al-mini-title">What is never recorded</h3>
+            <ul class="al-never">
+              <li>Keystrokes or mouse input</li>
+              <li>Screenshots or screen contents</li>
+              <li>Audio, messages, or what was playing</li>
+              <li>Full web addresses, paths or search terms</li>
+              <li>Raw window titles</li>
+              <li>Names of apps and sites I block: they appear as <em>Private</em></li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="al-mini-title">What a record can hold</h3>
+            <p class="al-note">A time with its UTC offset, the device, the collector, the kind of event, an app name or a domain, a length, and a short label. The format allows nothing else: a collector that tried to add a field, like a full address, would fail validation. <a class="text-link" href="#schema">Try it below.</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="try" aria-labelledby="try-title">
+      <h2 id="try-title" class="section-title">Try it</h2>
+      <p class="al-big al-try-intro">Everything below runs in your browser on invented sample data. It works the way the real thing does, but nothing here is anyone's real activity, and nothing you type is sent anywhere.</p>
+
+      <article class="al-demo" id="week" aria-labelledby="week-title">
+        <header class="al-demo-head">
+          <p class="al-demo-num">01</p>
+          <h3 id="week-title" class="al-demo-title">A sample week</h3>
+          <p class="al-demo-lede">Focus by the hour across a working week. Pick a day, or a cell, to open it below and see it the four ways the report does.</p>
+        </header>
+        <div class="al-heat" id="al-heat" role="group" aria-label="Focus minutes per hour, Monday to Friday"></div>
+        <div class="al-week-tiles al-tiles" id="al-week-tiles"></div>
+
+        <figure class="al-preview" id="al-explorer" aria-labelledby="al-explorer-cap">
+          <div class="al-seg al-days" role="radiogroup" aria-label="Day">
+            <label><input type="radio" name="al-day" value="0" checked> Mon</label>
+            <label><input type="radio" name="al-day" value="1"> Tue</label>
+            <label><input type="radio" name="al-day" value="2"> Wed</label>
+            <label><input type="radio" name="al-day" value="3"> Thu</label>
+            <label><input type="radio" name="al-day" value="4"> Fri</label>
+          </div>
+          <div class="al-window">
+            <div class="al-window-bar">
+              <span class="al-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="al-window-title" id="al-day-title">Attention Ledger · Monday</span>
+            </div>
+            <div class="al-tabs" role="tablist" aria-label="Report views" hidden>
+              <button type="button" role="tab" id="al-tab-timeline" aria-controls="al-panel-timeline" aria-selected="true">Timeline</button>
+              <button type="button" role="tab" id="al-tab-group" aria-controls="al-panel-group" aria-selected="false" tabindex="-1">Group by</button>
+              <button type="button" role="tab" id="al-tab-drift" aria-controls="al-panel-drift" aria-selected="false" tabindex="-1">Distractions</button>
+              <button type="button" role="tab" id="al-tab-log" aria-controls="al-panel-log" aria-selected="false" tabindex="-1">Raw log</button>
+            </div>
+            <div class="al-panel" id="al-panel-timeline" role="tabpanel" aria-labelledby="al-tab-timeline">
+              <div class="al-tiles" data-al="tiles"></div>
+              <div class="al-timeline" data-al="timeline"></div>
+              <ul class="al-legend" data-al="legend"></ul>
+            </div>
+            <div class="al-panel" id="al-panel-group" role="tabpanel" aria-labelledby="al-tab-group">
+              <div class="al-seg" role="radiogroup" aria-label="Group time by">
+                <label><input type="radio" name="al-group" value="category" checked> Category</label>
+                <label><input type="radio" name="al-group" value="device"> Device</label>
+                <label><input type="radio" name="al-group" value="label"> App or site</label>
+              </div>
+              <ol class="al-bars" data-al="bars"></ol>
+            </div>
+            <div class="al-panel" id="al-panel-drift" role="tabpanel" aria-labelledby="al-tab-drift">
+              <div class="al-table-wrap">
+                <table class="al-table" data-al="drift">
+                  <caption>Every time I left a task, and whether I came back</caption>
+                  <thead><tr><th scope="col">Time</th><th scope="col">Kind</th><th scope="col">Left</th><th scope="col">For</th><th scope="col">On</th><th scope="col" class="num">Away</th><th scope="col">Came back to</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="al-panel" id="al-panel-log" role="tabpanel" aria-labelledby="al-tab-log">
+              <pre class="al-json al-log" data-al="log" tabindex="0" aria-label="Raw event log, scroll for more"></pre>
+            </div>
+          </div>
+          <figcaption id="al-explorer-cap">Hover or tab through the timeline for each block. The raw log is exactly the shape the collectors write.</figcaption>
+        </figure>
+      </article>
+
+      <article class="al-demo" id="categories" aria-labelledby="cats-title">
+        <header class="al-demo-head">
+          <p class="al-demo-num">02</p>
+          <h3 id="cats-title" class="al-demo-title">Sort it your way</h3>
+          <p class="al-demo-lede">What counts as work is mine to decide. Move an app or site to another category, or change which categories count as focus, and the week above regroups at once, the way every past day regroups the next time the real report runs.</p>
+        </header>
+        <div class="al-cats">
+          <fieldset class="al-focus-pick">
+            <legend class="al-mini-title">Counts as focus</legend>
+            <div class="al-checks" id="al-focus-checks"></div>
+          </fieldset>
+          <div class="al-cat-list" id="al-cat-list"></div>
+          <p><button type="button" class="button button-line al-small-btn" id="al-cat-reset">Reset to my defaults</button></p>
+        </div>
+      </article>
+
+      <article class="al-demo" id="filter" aria-labelledby="filter-title">
+        <header class="al-demo-head">
+          <p class="al-demo-num">03</p>
+          <h3 id="filter-title" class="al-demo-title">What actually gets stored</h3>
+          <p class="al-demo-lede">Type what a device sees, and watch what survives. This follows the same rules the collectors use, so you can try to sneak something through.</p>
+        </header>
+        <div class="al-play" id="al-filter">
+          <div class="al-play-in">
+            <div class="al-seg" role="radiogroup" aria-label="Which collector">
+              <label><input type="radio" name="al-src" value="laptop" checked> Laptop app</label>
+              <label><input type="radio" name="al-src" value="browser"> Browser tab</label>
+              <label><input type="radio" name="al-src" value="phone"> iPhone app</label>
+            </div>
+            <div class="al-field" data-for="laptop">
+              <label for="al-f-app">App</label>
+              <select id="al-f-app">
+                <option value="Code.exe" data-allow="1">VS Code (title allowed)</option>
+                <option value="olk.exe">Outlook</option>
+                <option value="notepad.exe">Notepad</option>
+                <option value="BankingApp.exe" data-block="1">My banking app (blocked)</option>
+              </select>
+            </div>
+            <div class="al-field" data-for="laptop">
+              <label for="al-f-title">Window title it sees</label>
+              <input id="al-f-title" type="text" spellcheck="false" autocomplete="off" value="notes for jane.doe@example.com C:\Users\sri\Documents\plan.md - attention-ledger - Visual Studio Code">
+            </div>
+            <div class="al-field" data-for="browser" hidden>
+              <label for="al-f-url">Address in the tab</label>
+              <input id="al-f-url" type="text" spellcheck="false" autocomplete="off" value="https://www.youtube.com/watch?v=abc123&amp;t=42s">
+              <p class="al-presets" aria-label="Examples">
+                <button type="button" data-url="https://mail.google.com/mail/u/0/#inbox/FMfcgzQ">Inbox</button>
+                <button type="button" data-url="https://www.bbc.co.uk/news/articles/c4g7?at_medium=RSS">News</button>
+                <button type="button" data-url="http://localhost:3000/admin">Localhost</button>
+                <button type="button" data-url="chrome://settings/passwords">Browser page</button>
+                <button type="button" data-url="https://onlinebanking.mybank.com/accounts/1234" data-block="1">Blocked site</button>
+              </p>
+            </div>
+            <div class="al-field" data-for="phone" hidden>
+              <label for="al-f-phone">App that opened</label>
+              <select id="al-f-phone">
+                <option>Instagram</option><option>Messages</option><option>Slack</option><option data-block="1">My health app (blocked)</option>
+              </select>
+            </div>
+            <label class="al-check"><input type="checkbox" id="al-f-block"> Block this app or site</label>
+          </div>
+          <div class="al-play-out">
+            <ol class="al-steps" id="al-f-steps" aria-live="polite"></ol>
+            <p class="al-mini-title">Written to the log</p>
+            <pre class="al-json" id="al-f-out"></pre>
+          </div>
+        </div>
+      </article>
+
+      <article class="al-demo" id="rules" aria-labelledby="rules-title">
+        <header class="al-demo-head">
+          <p class="al-demo-num">04</p>
+          <h3 id="rules-title" class="al-demo-title">Does that count as a distraction?</h3>
+          <p class="al-demo-lede">I'm working in VS Code. Something pulls me away. Whether the report counts it depends on what, where and for how long.</p>
+        </header>
+        <div class="al-play" id="al-rules">
+          <div class="al-play-in">
+            <div class="al-field">
+              <label for="al-r-what">I switch to</label>
+              <select id="al-r-what">
+                <option value="Instagram|distraction">Instagram</option>
+                <option value="youtube.com|distraction">youtube.com</option>
+                <option value="Messages|communication">Messages</option>
+                <option value="A quick search|other">A quick web search</option>
+                <option value="amazon.com|personal">amazon.com</option>
+              </select>
+            </div>
+            <div class="al-seg" role="radiogroup" aria-label="On which device">
+              <label><input type="radio" name="al-r-dev" value="laptop" checked> On the laptop</label>
+              <label><input type="radio" name="al-r-dev" value="phone"> On the iPhone</label>
+            </div>
+            <div class="al-field">
+              <label for="al-r-secs">For <output id="al-r-secs-out" for="al-r-secs">45 seconds</output></label>
+              <input id="al-r-secs" type="range" min="1" max="600" value="45">
+            </div>
+          </div>
+          <div class="al-play-out">
+            <div class="al-strip" id="al-r-strip" aria-hidden="true"></div>
+            <p class="al-verdict" id="al-r-verdict" aria-live="polite"></p>
+            <p class="al-note" id="al-r-why"></p>
+          </div>
+        </div>
+      </article>
+
+      <article class="al-demo" id="schema" aria-labelledby="schema-title">
+        <header class="al-demo-head">
+          <p class="al-demo-num">05</p>
+          <h3 id="schema-title" class="al-demo-title">The format says no</h3>
+          <p class="al-demo-lede">Every collector writes one strict line format, and every day file is checked against it. Edit the line, or pick an example, and see whether it would pass.</p>
+        </header>
+        <div class="al-play" id="al-schema">
+          <div class="al-play-in">
+            <p class="al-presets" aria-label="Examples">
+              <button type="button" data-ex="ok">A normal span</button>
+              <button type="button" data-ex="url">Sneaks in a URL</button>
+              <button type="button" data-ex="path">Domain with a path</button>
+              <button type="button" data-ex="private">Private, with a name</button>
+              <button type="button" data-ex="tz">Time with no offset</button>
+            </p>
+            <label class="al-mini-title" for="al-s-in">One log line</label>
+            <textarea id="al-s-in" class="al-json al-code-in" rows="7" spellcheck="false"></textarea>
+          </div>
+          <div class="al-play-out">
+            <p class="al-verdict" id="al-s-verdict" aria-live="polite"></p>
+            <ul class="al-errors" id="al-s-errors"></ul>
+          </div>
+        </div>
+      </article>
+
+      <article class="al-demo" id="pause" aria-labelledby="pause-title">
+        <header class="al-demo-head">
+          <p class="al-demo-num">06</p>
+          <h3 id="pause-title" class="al-demo-title">Pause one, or all of them</h3>
+          <p class="al-demo-lede">A pause can start on any device. A pause for all devices travels through a small switch file in my own iCloud Drive folder, so no server is ever involved.</p>
+        </header>
+        <div class="al-play al-play-wide" id="al-pause">
+          <div class="al-play-in al-pause-in">
+            <div class="al-field">
+              <label for="al-p-from">Start it from</label>
+              <select id="al-p-from">
+                <option value="phone">iPhone: Toggle Tracking shortcut</option>
+                <option value="laptop">Laptop: tray menu or Ctrl+Alt+P</option>
+                <option value="browser">Browser: toolbar popup</option>
+              </select>
+            </div>
+            <div class="al-seg" role="radiogroup" aria-label="Pause which devices">
+              <label><input type="radio" name="al-p-scope" value="device"> This device</label>
+              <label><input type="radio" name="al-p-scope" value="all" checked> All devices</label>
+            </div>
+            <div class="al-seg" role="radiogroup" aria-label="For how long">
+              <label><input type="radio" name="al-p-for" value="15" checked> 15 min</label>
+              <label><input type="radio" name="al-p-for" value="60"> 1 hour</label>
+              <label><input type="radio" name="al-p-for" value="0"> Until resumed</label>
+            </div>
+            <p><button type="button" class="button" id="al-p-go">Pause</button></p>
+          </div>
+          <div class="al-play-out">
+            <div class="al-devices" id="al-p-devices">
+              <div class="al-dev" data-dev="laptop"><strong>Laptop agent</strong><span class="al-dev-state">Tracking</span></div>
+              <div class="al-dev" data-dev="browser"><strong>Browsers</strong><span class="al-dev-state">Tracking</span></div>
+              <div class="al-dev al-dev-cloud" data-dev="cloud"><strong>iCloud Drive folder</strong><span class="al-dev-state">Switch: off</span></div>
+              <div class="al-dev" data-dev="phone"><strong>iPhone</strong><span class="al-dev-state">Tracking</span></div>
+            </div>
+            <ol class="al-steps al-p-steps" id="al-p-steps" aria-live="polite"></ol>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="section wrap split" id="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title" class="section-title">Hard parts</h2>
+      <ol class="timeline">
+        <li>
+          <p class="when">iPhone</p>
+          <div>
+            <h3>iOS won't share app usage</h3>
+            <p>Screen Time data can only be shown inside Apple's own sandboxed view and can't be exported. Personal Shortcuts automations ("when Instagram opens, run this") are the one route into a file I own, so every app gets its own automation running two small Scriptable scripts.</p>
+          </div>
+        </li>
+        <li>
+          <p class="when">iPhone</p>
+          <div>
+            <h3>There is no "phone locked" signal</h3>
+            <p>An app that never logs a close ends at the first of: the next app, activity on the laptop, a Sleep Focus or charger change, or a cap of 45 minutes for video, calls and maps and 20 for everything else.</p>
+          </div>
+        </li>
+        <li>
+          <p class="when">Laptop</p>
+          <div>
+            <h3>Two collectors see the same screen</h3>
+            <p>The agent sees "the browser is in front"; the extension knows which site. The timeline prefers the more specific one, and anything in front for under three seconds is folded into what came before, so alt-tabbing past windows doesn't count as switching.</p>
+          </div>
+        </li>
+        <li>
+          <p class="when">Everywhere</p>
+          <div>
+            <h3>A pause has to reach every device, without a server</h3>
+            <p>The shared iCloud folder doubles as the switch. The laptop checks it every few seconds, and the phone checks it each time an automation runs, so a pause started anywhere is honoured everywhere, usually within a minute.</p>
+          </div>
+        </li>
+        <li>
+          <p class="when">Format</p>
+          <div>
+            <h3>Making a leak impossible, not just unlikely</h3>
+            <p>The log format allows a fixed set of fields and nothing else. Adding a new kind of data means changing the format, its validator and its examples together, so a collector can't start recording more by accident.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="contact wrap" aria-labelledby="more-title">
+      <p class="contact-note">The design notes, diagrams and data format are public on GitHub. The code, and every minute it has recorded, stay with me.</p>
+      <h2 id="more-title" class="contact-title al-more-title"><a href="https://github.com/sriharish252/attention-ledger-overview" rel="noopener"><span>Design notes.</span></a></h2>
+      <p class="actions"><a class="button button-line" href="../#work">Back to selected work</a></p>
+    </section>
+  </main>
+
+  <footer class="footer wrap">
+    <p>© 2026 Sri Harish Jayaram</p>
+    <p><a href="https://www.linkedin.com/in/sri-harish" rel="noopener">LinkedIn</a> <a href="https://github.com/sriharish252" rel="noopener">GitHub</a></p>
+    <p><a href="#top">Back to top</a></p>
+  </footer>
+</body>
+</html>

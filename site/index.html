@@ -18,6 +18,7 @@
   <link rel="preload" href="assets/fonts/big-shoulders.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
   <script src="assets/attention-ledger.js" defer></script>
   <script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add("js")</script>
 </head>
@@ -268,6 +269,10 @@
             </figure>
 
             <p class="stack">Python, SQLite, Win32, JavaScript (Manifest V3), iOS Shortcuts, Scriptable, iCloud Drive, JSON Schema, pytest</p>
+            <p class="actions al-actions">
+              <a class="button" href="attention-ledger/">Open the full write-up</a>
+              <a class="text-link" href="https://github.com/sriharish252/attention-ledger-overview" rel="noopener">Design notes on GitHub</a>
+            </p>
             <p class="al-private-note">The source stays private, like the data it records.</p>
           </div>
         </details>
@@ -424,45 +429,5 @@
     <p><a href="#top">Back to top</a></p>
   </footer>
 
-  <script>
-    (function () {
-      var root = document.documentElement;
-      var button = document.querySelector(".mode");
-      var dark = window.matchMedia("(prefers-color-scheme: dark)");
-      var still = window.matchMedia("(prefers-reduced-motion: reduce)");
-      function current() { return root.dataset.theme || (dark.matches ? "dark" : "light"); }
-      function label() {
-        button.setAttribute("aria-label", "Switch to " + (current() === "dark" ? "light" : "dark") + " theme");
-      }
-      button.hidden = false;
-      label();
-      dark.addEventListener("change", label);
-      button.addEventListener("click", function () {
-        var next = current() === "dark" ? "light" : "dark";
-        function apply() {
-          root.dataset.theme = next;
-          try { localStorage.setItem("theme", next); } catch (e) {}
-          label();
-        }
-        if (!document.startViewTransition || still.matches) { apply(); return; }
-        // The new theme spreads out from the button as a circle.
-        var r = button.getBoundingClientRect();
-        root.style.setProperty("--vt-x", (r.left + r.width / 2) + "px");
-        root.style.setProperty("--vt-y", (r.top + r.height / 2) + "px");
-        document.startViewTransition(apply);
-      });
-
-      // Local time in Orlando, so visitors know when a reply is likely.
-      var clock = document.querySelector(".clock");
-      var time = clock.querySelector("time");
-      try {
-        var fmt = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
-        var tick = function () { time.textContent = fmt.format(new Date()); };
-        tick();
-        clock.hidden = false;
-        setInterval(tick, 30000);
-      } catch (e) {}
-    })();
-  </script>
 </body>
 </html>
