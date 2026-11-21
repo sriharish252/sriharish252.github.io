@@ -18,6 +18,7 @@
   <link rel="preload" href="assets/fonts/big-shoulders.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/hanken-grotesk.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/attention-ledger.js" defer></script>
   <script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add("js")</script>
 </head>
 <body>
@@ -111,6 +112,163 @@
             </dl>
             <p class="stack">TypeScript, Next.js, React, Zod, Vitest, GitHub Actions</p>
             <p><a class="button" href="https://sriharish252.github.io/computational-website-generation/">Open the live demo</a></p>
+          </div>
+        </details>
+
+        <details class="project" id="attention-ledger">
+          <summary>
+            <span class="project-main">
+              <span class="project-name">Attention Ledger</span>
+              <span class="project-line">A private record of where my time goes across my laptop and iPhone, kept only on my own devices and my own iCloud Drive.</span>
+              <span class="thumbs thumbs-wide al-thumb" aria-hidden="true" hidden></span>
+            </span>
+            <span class="meta">Personal, 2026</span>
+            <span class="toggle" aria-hidden="true"></span>
+          </summary>
+          <div class="project-body">
+            <figure class="al-flow" aria-labelledby="al-flow-cap">
+              <div class="al-zone">
+                <p class="al-zone-label"><span class="al-lock" aria-hidden="true"></span>Everything stays inside: my devices and my own iCloud Drive</p>
+                <div class="al-stages">
+                  <section class="al-stage" aria-label="Collect">
+                    <h3 class="al-stage-title"><span>1</span> Collect</h3>
+                    <div class="al-node"><strong>Laptop agent</strong><span>Which app is in front, idle time and screen lock on Windows</span></div>
+                    <div class="al-node"><strong>Browser extension</strong><span>Only the active tab's domain, never the page or the address</span></div>
+                    <div class="al-node"><strong>iPhone automations</strong><span>When an app opens and closes, through Shortcuts</span></div>
+                  </section>
+                  <section class="al-stage" aria-label="Store">
+                    <h3 class="al-stage-title"><span>2</span> Store</h3>
+                    <div class="al-node"><strong>Database on the laptop</strong><span>The extension hands events to the agent over the laptop's own loopback address; raw events are deleted after 30 days</span></div>
+                    <div class="al-node"><strong>Private iCloud Drive folder</strong><span>The phone's daily log, synced to the laptop by iCloud. A pause for all devices travels the same way</span></div>
+                  </section>
+                  <section class="al-stage" aria-label="Review">
+                    <h3 class="al-stage-title"><span>3</span> Review</h3>
+                    <div class="al-node"><strong>One timeline</strong><span>Both devices merged, every app and site sorted into categories I choose</span></div>
+                    <div class="al-node al-node-out"><strong>Exports, for me</strong><span>A daily report and a spreadsheet of every distraction, written to a folder on my laptop</span></div>
+                  </section>
+                </div>
+              </div>
+              <ul class="al-outside" aria-label="What is never involved">
+                <li>No servers</li><li>No accounts</li><li>No telemetry</li><li>No third-party analytics</li>
+              </ul>
+              <figcaption id="al-flow-cap">How the data moves. Each device has its own small collector, all of them write the same event format, and nothing is sent anywhere I don't own.</figcaption>
+            </figure>
+
+            <div class="al-record">
+              <div>
+                <h3 class="al-mini-title">What one record holds</h3>
+                <pre class="al-json" aria-label="An example event"><code>{ <b>"ts"</b>: "2026-11-09T09:25:30-05:00",
+  <b>"device"</b>: "laptop",
+  <b>"event"</b>: "span",
+  <b>"app"</b>: "msedge.exe",
+  <b>"domain"</b>: "github.com",
+  <b>"duration_s"</b>: 240 }</code></pre>
+                <p class="al-note">The schema allows no other fields, so a collector can't quietly start logging something new, like a full address, without the format changing first.</p>
+              </div>
+              <div>
+                <h3 class="al-mini-title">What is never recorded</h3>
+                <ul class="al-never">
+                  <li>Keystrokes or mouse input</li>
+                  <li>Screenshots or screen contents</li>
+                  <li>Audio, messages or what was playing</li>
+                  <li>Full web addresses or page paths</li>
+                  <li>Raw window titles</li>
+                  <li>Names of apps I block: they appear as <em>Private</em>, so totals still add up</li>
+                </ul>
+              </div>
+            </div>
+
+            <dl class="facts">
+              <div><dt>Problem</dt><dd>I wanted an honest answer, at the end of each day, to where my time and attention went across my laptop and phone, without handing a minute-by-minute record of my life to a store app or someone else's cloud.</dd></div>
+              <div><dt>Approach</dt><dd>Three small collectors, one per surface, each built and tested on its own: a Windows agent, a Chromium extension and iPhone Shortcuts automations, the one route iOS allows into a file I own. All write one strict JSON Lines format. An analysis step merges the devices into one timeline and finds focus stretches, switches and the moments I drifted.</dd></div>
+              <div><dt>My role</dt><dd>Sole designer and developer, and the only user.</dd></div>
+              <div><dt>Outcome</dt><dd>In daily use on my laptop, browsers and iPhone, with about 250 automated tests run on Windows and Ubuntu. I can pause one device or all of them and block any app or site from either side. The data is mine to export and analyse, and it is never shared.</dd></div>
+            </dl>
+
+            <figure class="al-preview" aria-labelledby="al-preview-cap">
+              <div class="al-window">
+                <div class="al-window-bar">
+                  <span class="al-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                  <span class="al-window-title">Attention Ledger · Monday, sample day</span>
+                </div>
+                <div class="al-tabs" role="tablist" aria-label="Preview views" hidden>
+                  <button type="button" role="tab" id="al-tab-timeline" aria-controls="al-panel-timeline" aria-selected="true">Timeline</button>
+                  <button type="button" role="tab" id="al-tab-group" aria-controls="al-panel-group" aria-selected="false" tabindex="-1">Group by</button>
+                  <button type="button" role="tab" id="al-tab-drift" aria-controls="al-panel-drift" aria-selected="false" tabindex="-1">Distractions</button>
+                  <button type="button" role="tab" id="al-tab-log" aria-controls="al-panel-log" aria-selected="false" tabindex="-1">Raw log</button>
+                  <button type="button" role="tab" id="al-tab-controls" aria-controls="al-panel-controls" aria-selected="false" tabindex="-1">Controls</button>
+                </div>
+
+                <div class="al-panel" id="al-panel-timeline" role="tabpanel" aria-labelledby="al-tab-timeline">
+                  <div class="al-tiles" data-al="tiles"></div>
+                  <div class="al-timeline" data-al="timeline"></div>
+                  <ul class="al-legend" data-al="legend"></ul>
+                </div>
+
+                <div class="al-panel" id="al-panel-group" role="tabpanel" aria-labelledby="al-tab-group">
+                  <div class="al-seg" role="radiogroup" aria-label="Group time by">
+                    <label><input type="radio" name="al-group" value="category" checked> Category</label>
+                    <label><input type="radio" name="al-group" value="device"> Device</label>
+                    <label><input type="radio" name="al-group" value="label"> App or site</label>
+                  </div>
+                  <ol class="al-bars" data-al="bars"></ol>
+                  <p class="al-note">Moving an app between categories is one line in a settings file I keep with my logs, and every past day regroups the next time the report runs.</p>
+                </div>
+
+                <div class="al-panel" id="al-panel-drift" role="tabpanel" aria-labelledby="al-tab-drift">
+                  <div class="al-table-wrap">
+                    <table class="al-table" data-al="drift">
+                      <caption>Every time I left a task, and whether I came back</caption>
+                      <thead><tr><th scope="col">Time</th><th scope="col">Kind</th><th scope="col">Left</th><th scope="col">For</th><th scope="col">On</th><th scope="col" class="num">Away</th><th scope="col">Came back to</th></tr></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                  <p class="al-note">The same rows go into a CSV that I open in a spreadsheet of my own.</p>
+                </div>
+
+                <div class="al-panel" id="al-panel-log" role="tabpanel" aria-labelledby="al-tab-log">
+                  <pre class="al-json al-log" data-al="log" tabindex="0" aria-label="Raw event log, scroll for more"></pre>
+                  <p class="al-note">One file per device per day, one line per event. Every time carries its UTC offset, so the phone and laptop line up exactly.</p>
+                </div>
+
+                <div class="al-panel" id="al-panel-controls" role="tabpanel" aria-labelledby="al-tab-controls">
+                  <div class="al-controls">
+                    <div class="al-control">
+                      <h3 class="al-mini-title">Pause</h3>
+                      <div class="al-seg" role="radiogroup" aria-label="Pause which devices">
+                        <label><input type="radio" name="al-scope" value="this" checked> This device</label>
+                        <label><input type="radio" name="al-scope" value="all"> All devices</label>
+                      </div>
+                      <div class="al-seg" role="radiogroup" aria-label="Pause for how long">
+                        <label><input type="radio" name="al-for" value="15 minutes" checked> 15 min</label>
+                        <label><input type="radio" name="al-for" value="1 hour"> 1 hour</label>
+                        <label><input type="radio" name="al-for" value="until resumed"> Until resumed</label>
+                      </div>
+                      <p class="al-status" data-al="pause" aria-live="polite"></p>
+                    </div>
+                    <div class="al-control">
+                      <h3 class="al-mini-title">Blocked</h3>
+                      <ul class="al-chips">
+                        <li>Banking app</li><li>Health app</li><li>Password manager</li>
+                      </ul>
+                      <p class="al-note">Logged only as <em>Private</em>, with no name, title or domain.</p>
+                    </div>
+                    <div class="al-control">
+                      <h3 class="al-mini-title">Kept</h3>
+                      <dl class="al-kv">
+                        <div><dt>Laptop database</dt><dd>30 days</dd></div>
+                        <div><dt>Browser's own copy</dt><dd>7 days</dd></div>
+                        <div><dt>Exports</dt><dd>My laptop only</dd></div>
+                      </dl>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <figcaption id="al-preview-cap">A preview of how a day looks, with invented sample data. The real reports are only ever seen by me.</figcaption>
+            </figure>
+
+            <p class="stack">Python, SQLite, Win32, JavaScript (Manifest V3), iOS Shortcuts, Scriptable, iCloud Drive, JSON Schema, pytest</p>
+            <p class="al-private-note">The source stays private, like the data it records.</p>
           </div>
         </details>
 

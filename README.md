@@ -2,13 +2,14 @@
 
 The portfolio of Sri Harish Jayaram, live at <https://sriharish252.github.io>.
 
-It is one hand-written HTML page and one stylesheet in [`site/`](site), with no framework, no build step and no animation library. A push to `main` deploys `site/` to GitHub Pages through [Actions](.github/workflows/pages.yml).
+It is one hand-written HTML page, one stylesheet and one small script in [`site/`](site), with no framework, no build step and no animation library. A push to `main` deploys `site/` to GitHub Pages through [Actions](.github/workflows/pages.yml).
 
 ## Design
 
 - **Type:** Big Shoulders Display for the large condensed headings, Hanken Grotesk for everything else. Both are self-hosted Latin subsets under the SIL Open Font License; see [`site/assets/fonts/LICENSE.md`](site/assets/fonts/LICENSE.md).
 - **Colour:** a pale sky-blue page with deep navy ink and a sun-yellow highlight, plus a navy dark theme. Light and dark follow the system, and the toggle can pin either.
 - **Work:** each project is a row that previews its title, a one-line summary and small images, and opens in place for the full write-up. Clicking a preview image opens its row.
+- **Attention Ledger preview:** the diagram is plain HTML and CSS. The preview window (timeline, totals, distractions, raw log and controls) is drawn by [`assets/attention-ledger.js`](site/assets/attention-ledger.js) from one invented sample day, so every view agrees. No real tracking data is on the site, and the project's source stays private.
 - **Motion:** the headline rises line by line on load, a ticker lists the tools I use, rows slide open, and the theme switch spreads out from the button. All of it is CSS or a few lines of inline script, and it switches off for visitors who prefer reduced motion.
 
 Before images, the first view is about 80 KB: HTML, CSS and two fonts. Images load lazily, with smaller versions for phones.
