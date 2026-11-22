@@ -880,11 +880,11 @@ html:not(.js) .al-preview { display: none; }
 .contact-note { max-width: 32em; color: var(--muted); font-size: clamp(1.1rem, 1.5vw, 1.3rem); }
 .contact-title { margin-block: clamp(1.5rem, 3vw, 2.75rem); font-size: clamp(5rem, 21vw, 19rem); line-height: 0.8; }
 .contact-title a { text-decoration: none; }
-.contact-title span {
+.contact-title span:not(.sr-only) {
   background: linear-gradient(var(--accent), var(--accent)) no-repeat 0 100% / 0% 0.08em;
   transition: background-size 0.6s var(--ease-out), color 0.3s;
 }
-.contact-title a:hover span, .contact-title a:focus-visible span { background-size: 100% 0.08em; }
+.contact-title a:hover span:not(.sr-only), .contact-title a:focus-visible span:not(.sr-only) { background-size: 100% 0.08em; }
 
 /* Footer */
 .footer {
@@ -898,6 +898,16 @@ html:not(.js) .al-preview { display: none; }
   font-size: 0.9375rem;
 }
 .footer p:nth-child(2) { display: flex; gap: 1.5rem; }
+
+/* Text for screen readers only, such as a note that a link opens a new tab */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 /* Image viewer: every project image opens full size */
 .zoomable { cursor: zoom-in; }
