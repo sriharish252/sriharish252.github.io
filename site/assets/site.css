@@ -362,10 +362,15 @@ a:hover { color: var(--accent); }
 /* Attention Ledger: the data-flow diagram and the preview window. Category
    colours are three validated hues plus neutrals; text never wears them. */
 #attention-ledger, .al-page {
-  --al-focus: light-dark(#2a78d6, #3987e5);
-  --al-drift: light-dark(#eb6834, #d95926);
-  --al-comm: light-dark(#1baf7a, #199e70);
-  --al-other: light-dark(#97a7b5, #5d7189);
+  /* Three validated hues, one per project, in a fixed order so a colour always follows its project.
+     Everything that isn't a project is a neutral; distractions are ink, so they read as cuts. */
+  --al-p1: light-dark(#2a78d6, #3987e5);
+  --al-p2: light-dark(#1baf7a, #199e70);
+  --al-p3: light-dark(#eb6834, #d95926);
+  --al-unassigned: light-dark(#6d8193, #7a8fa6);
+  --al-other: light-dark(#a8bac8, #34495f);
+  --al-drift: var(--ink);
+  --al-focus: var(--al-p1);
   --al-private: repeating-linear-gradient(135deg, var(--muted) 0 2px, transparent 2px 5px);
   --al-paused: repeating-linear-gradient(45deg, var(--line) 0 1.5px, transparent 1.5px 6px);
 }
@@ -373,14 +378,16 @@ html:not(.js) .al-preview { display: none; }
 /* Grid items default to their content's width; the long log lines must scroll, not stretch the row. */
 #attention-ledger .project-body > *, .al-record > *, .al-window, .al-panel > *, .al-stage, .al-control { min-width: 0; }
 
-.al-c-focus { background: var(--al-focus); }
+.al-c-p1, .al-c-focus { background: var(--al-p1); }
+.al-c-p2 { background: var(--al-p2); }
+.al-c-p3 { background: var(--al-p3); }
+.al-c-unassigned { background: var(--al-unassigned); }
 .al-c-drift { background: var(--al-drift); }
-.al-c-comm { background: var(--al-comm); }
 .al-c-other { background: var(--al-other); }
 .al-c-private { background: var(--al-private); box-shadow: inset 0 0 0 1px var(--muted); }
 .al-c-device { background: var(--muted); }
 .al-paused { background: var(--al-paused); box-shadow: inset 0 0 0 1px var(--line); }
-.al-locked { background: var(--line); }
+.al-locked { background: transparent; box-shadow: inset 0 0 0 1.5px var(--muted); }
 .al-c-focus-faint { background: color-mix(in oklab, var(--al-focus) 45%, transparent); }
 
 /* Closed-row thumbnail: the sample day in miniature */
@@ -659,6 +666,19 @@ html:not(.js) .al-preview { display: none; }
 .al-bar { display: block; height: 100%; min-width: 3px; border-radius: 0 4px 4px 0; transition: width 0.4s var(--ease-out); }
 .al-bar-value { color: var(--muted); font-size: 0.875rem; text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 34rem) { .al-bar-row { grid-template-columns: 6.5rem minmax(0, 1fr) 3.75rem; gap: 0.5rem; } }
+/* Project rows: the bar, then what happened inside that time */
+.al-bars-projects { gap: 1rem; }
+.al-proj-row { grid-template-columns: minmax(6rem, 11rem) minmax(0, 1fr) 7rem; row-gap: 0.35rem; }
+.al-proj-row .al-bar-name { font-weight: 650; }
+.al-proj-row .al-bar-track { height: 1.35rem; }
+.al-proj-facts { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 0.2rem 1.25rem; color: var(--muted); font-size: 0.8125rem; }
+.al-proj-facts b { color: var(--ink); font-weight: 600; }
+@media (max-width: 34rem) {
+  .al-proj-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .al-proj-row .al-bar-track { grid-column: 1 / -1; grid-row: 2; }
+  .al-proj-facts { grid-column: 1 / -1; }
+}
+.al-table td .al-key { display: inline-block; width: 0.7rem; height: 0.7rem; vertical-align: -0.05rem; }
 
 /* Distractions table */
 .al-table-wrap { overflow-x: auto; }
@@ -668,7 +688,7 @@ html:not(.js) .al-preview { display: none; }
 .al-table td { padding: 0.55rem 0.75rem 0.55rem 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .al-table .num { text-align: right; }
 .al-kind { display: inline-block; padding: 0.05rem 0.5rem; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line); font-size: 0.8125rem; }
-.al-kind-drift { box-shadow: inset 0 0 0 1.5px var(--al-drift); font-weight: 600; }
+.al-kind-drift { box-shadow: inset 0 0 0 1.5px var(--ink); font-weight: 600; }
 
 .al-log { max-height: 17rem; margin: 0; font-size: 0.78rem; white-space: pre; }
 
@@ -731,16 +751,15 @@ html:not(.js) .al-preview { display: none; }
 .al-demo-title { font-family: var(--display); font-weight: 800; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 0.95; text-transform: uppercase; }
 .al-demo-lede { max-width: 42em; color: var(--muted); }
 
-/* Week heat map: one blue hue, light to dark, mixed against the surface */
-.al-heat { position: relative; display: grid; gap: 0.75rem; }
-.al-heat-grid { display: grid; grid-template-columns: 3.25rem repeat(9, minmax(0, 1fr)); gap: 3px; }
-.al-heat-hour { color: var(--muted); font-size: 0.8125rem; text-align: center; padding-bottom: 0.2rem; font-variant-numeric: tabular-nums; }
-@media (max-width: 40rem) { .al-heat-hour:nth-child(odd) { visibility: hidden; } }
-.al-heat-day {
-  display: flex;
-  align-items: center;
+.al-week-tiles .al-tile { background: var(--surface); }
+.al-days { margin-bottom: 0.25rem; }
+
+/* Week by project: one stacked bar per day */
+.al-weekbars { position: relative; display: grid; gap: 0.9rem; }
+.al-week-list { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; }
+.al-week-row { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr) 4.75rem; align-items: center; gap: 0.75rem; }
+.al-week-day {
   min-height: 2.75rem;
-  padding: 0 0.4rem;
   border: 0;
   border-radius: 6px;
   background: none;
@@ -749,41 +768,41 @@ html:not(.js) .al-preview { display: none; }
   font-size: 0.9375rem;
   cursor: pointer;
 }
-.al-heat-day:hover, .al-heat-day.is-on { color: var(--ink); }
-.al-heat-day.is-on { background: var(--sun); color: var(--on-sun); }
-.al-heat-cell {
-  min-height: 2.75rem;
-  border: 0;
-  border-radius: 4px;
-  font-size: 0.8125rem;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  transition: box-shadow 0.15s;
+.al-week-day:hover { color: var(--ink); }
+.al-week-row.is-on .al-week-day { background: var(--sun); color: var(--on-sun); }
+.al-week-track { height: 2rem; border-radius: 6px; background: var(--ground); }
+.al-week-stack { display: flex; gap: 2px; height: 100%; transition: width 0.4s var(--ease-out); }
+.al-week-seg { flex: 1 1 0; min-width: 3px; cursor: pointer; transition: filter 0.15s; }
+.al-week-seg:first-child { border-radius: 6px 0 0 6px; }
+.al-week-seg:last-child { border-radius: 0 6px 6px 0; }
+.al-week-seg:only-child { border-radius: 6px; }
+.al-week-seg:hover, .al-week-seg:focus-visible { filter: brightness(1.12) saturate(1.1); outline: 2px solid var(--ink); outline-offset: 1px; }
+.al-week-total { color: var(--muted); font-size: 0.875rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* Is it what I thought? The bar is what happened; the dashed outline is the guess. */
+.al-guess { display: grid; gap: 1.25rem; padding: clamp(1rem, 2.5vw, 1.75rem); border-radius: 12px; background: var(--surface); box-shadow: 0 0 0 1px var(--line); }
+.al-guess-row { display: grid; grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr) 6rem; align-items: center; gap: 0.4rem 1rem; }
+.al-guess-name { font-weight: 650; font-size: 0.9375rem; }
+.al-guess-row input[type="range"] { width: 100%; accent-color: var(--accent); }
+.al-guess-out { font-weight: 600; font-size: 0.875rem; text-align: right; font-variant-numeric: tabular-nums; }
+.al-guess-track { position: relative; grid-column: 2 / 4; height: 1.6rem; border-radius: 6px; background: var(--ground); }
+.al-guess-bar { position: absolute; inset: 0.25rem auto 0.25rem 0; border-radius: 0 4px 4px 0; transition: width 0.3s var(--ease-out); }
+.al-guess-mark { position: absolute; inset: 0 auto 0 0; border: 2px dashed var(--ink); border-radius: 6px; pointer-events: none; transition: width 0.15s; }
+.al-guess-diff { grid-column: 2 / 4; color: var(--muted); font-size: 0.875rem; }
+.al-verdict-line { margin-top: 0.25rem; font-weight: 650; font-size: 1.05rem; }
+@media (max-width: 34rem) {
+  .al-guess-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .al-guess-row input[type="range"], .al-guess-track, .al-guess-diff { grid-column: 1 / -1; }
 }
-.al-heat-cell:hover, .al-heat-cell:focus-visible { box-shadow: 0 0 0 2px var(--ink); outline: none; position: relative; z-index: 1; }
-.al-heat-cell.is-on { box-shadow: inset 0 -3px 0 var(--sun); }
-.al-heat-0 { background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); color: var(--muted); }
-.al-heat-1 { background: color-mix(in oklab, var(--al-focus) 22%, var(--surface)); color: var(--ink); }
-.al-heat-2 { background: color-mix(in oklab, var(--al-focus) 45%, var(--surface)); color: var(--ink); }
-.al-heat-3 { background: color-mix(in oklab, var(--al-focus) 72%, var(--surface)); color: #fff; }
-.al-heat-4 { background: color-mix(in oklab, var(--al-focus) 100%, #0c1a2a 8%); color: #fff; }
-.al-heat-cell.al-heat-0.is-on { box-shadow: inset 0 0 0 1px var(--line), inset 0 -3px 0 var(--sun); }
-.al-heat-key { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem; color: var(--muted); font-size: 0.875rem; }
-.al-heat-ramp { display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; }
-.al-heat-step { display: inline-flex; align-items: center; gap: 0.35rem; font-variant-numeric: tabular-nums; }
-.al-heat-step i { width: 1rem; height: 1rem; border-radius: 3px; }
-.al-week-tiles .al-tile { background: var(--surface); }
-.al-days { margin-bottom: 0.25rem; }
-@media (max-width: 34rem) { .al-heat-cell { font-size: 0; } }
+.al-cats > .al-check { align-items: flex-start; }
+.al-cats > .al-check input { margin-top: 0.2rem; flex: none; }
 
 /* Categories */
 .al-cats { display: grid; gap: 1.25rem; }
-.al-focus-pick { margin: 0; padding: 0; border: 0; }
-.al-checks { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
 .al-check { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.9375rem; cursor: pointer; }
 .al-check input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
-.al-cat-list { display: grid; gap: 0.5rem 2rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
-.al-cat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 9.5rem; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line); }
+.al-cat-list { display: grid; gap: 0.5rem 2rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 23rem), 1fr)); }
+.al-cat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto 10.5rem; align-items: center; gap: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--line); }
 .al-cat-name { font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .al-cat-time { color: var(--muted); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
 .al-page select, .al-field input[type="text"] {
@@ -834,7 +853,7 @@ html:not(.js) .al-preview { display: none; }
 .al-verdict { justify-self: start; padding: 0.4rem 0.9rem; border-radius: 999px; font-weight: 700; font-size: 1.15rem; box-shadow: inset 0 0 0 2px var(--line); }
 .al-verdict-drift { box-shadow: inset 0 0 0 2px var(--al-drift); }
 .al-verdict-check { box-shadow: inset 0 0 0 2px var(--ink); }
-.al-verdict-ok { box-shadow: inset 0 0 0 2px var(--al-comm); }
+.al-verdict-ok { box-shadow: inset 0 0 0 2px var(--al-p2); }
 .al-verdict-pass { color: var(--muted); }
 .al-errors { display: grid; gap: 0.4rem; margin: 0; padding-left: 1.2rem; color: var(--ink); font-size: 0.9375rem; }
 .al-errors li::marker { color: var(--al-drift); }

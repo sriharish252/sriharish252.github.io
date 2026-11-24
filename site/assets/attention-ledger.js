@@ -1,13 +1,15 @@
 // Attention Ledger previews. One renderer draws the preview window on the home
-// page's work row and on the project page. Every view (timeline, totals,
-// distractions, raw log) comes from the same invented sample data, so the
-// numbers always agree. No real tracking data is ever on this site.
+// page's work row and on the project page. Every view (projects, timeline,
+// interruptions, raw log) comes from the same invented sample data and follows
+// the same rules as the real report, so the numbers always agree. No real
+// tracking data is ever on this site.
 window.ALedger = (function () {
   var CAT_NAMES = {
     work: "Work", career: "Career", communication: "Communication", distraction: "Distraction",
     music: "Music", personal: "Personal", utility: "Utility", other: "Other", private: "Private"
   };
   var CAT_ORDER = ["work", "career", "communication", "distraction", "music", "personal", "utility", "other", "private"];
+  var UNASSIGNED = "Unassigned";
   var EXE = { "VS Code": "Code.exe", Slack: "slack.exe", Outlook: "olk.exe", Teams: "ms-teams.exe",
     Spotify: "Spotify.exe", "File Explorer": "explorer.exe", Terminal: "WindowsTerminal.exe", Postman: "Postman.exe" };
 
@@ -24,7 +26,8 @@ window.ALedger = (function () {
     return h ? h + "h " + (m < 10 ? "0" : "") + m + "m" : m + "m";
   }
   function overlap(a, b) { return Math.max(0, Math.min(a.e, b.e) - Math.max(a.s, b.s)); }
-  function isDomain(label) { return label.indexOf(".") > 0; }
+  function appOf(label) { return label.split(" · ")[0]; }
+  function isDomain(label) { return label.indexOf(".") > 0 && label.indexOf(" · ") < 0; }
 
   // A day: { date, start (minutes after midnight), span, segs: [[s, d, dev, label]],
   //          pause: {s, e, scope}, idle: [{s, e}], lock: [{s, e}] }
@@ -48,96 +51,141 @@ window.ALedger = (function () {
     };
   }
 
-  // ---- What the report works out, given categories and which ones count as focus ----
-  // role: focus / drift / comm / other / private. Colour follows the role.
-  function analyse(day, cats) {
-    function cat(r) { return r.label === "Private" ? "private" : cats.map[r.label] || "other"; }
-    function role(c) {
-      if (c === "private") return "private";
-      if (cats.focus.indexOf(c) >= 0) return "focus";
-      if (c === "distraction") return "drift";
-      if (c === "communication") return "comm";
-      return "other";
+  // ---- The report's rules ----
+  // cfg: { focus: [categories], map: {label or app: category},
+  //        projects: [{ name, match: [labels] }], carry: minutes }
+  // Each project gets a fixed colour slot by its place in the list, so a colour
+  // always follows the same project.
+  function analyse(day, cfg) {
+    var names = cfg.projects.map(function (p) { return p.name; });
+    function cat(r) {
+      if (r.label === "Private") return "private";
+      return cfg.map[r.label] || cfg.map[appOf(r.label)] || "other";
     }
-    day.segs.forEach(function (r) { r.cat = cat(r); r.role = role(r.cat); });
+    function rule(r) {
+      if (r.label === "Private") return null;
+      for (var i = 0; i < cfg.projects.length; i++) {
+        if (cfg.projects[i].match.indexOf(r.label) >= 0) return cfg.projects[i].name;
+      }
+      return null;
+    }
+    var last = null;
+    day.segs.forEach(function (r) {
+      r.cat = cat(r);
+      r.focus = cfg.focus.indexOf(r.cat) >= 0;
+      var p = rule(r);
+      if (!p && r.focus && r.dev === "laptop" && cfg.carry > 0 && last && r.s - last.e <= cfg.carry) p = last.p;
+      if (!p && r.focus) p = UNASSIGNED;
+      r.project = p;
+      if (p && p !== UNASSIGNED && r.dev === "laptop") last = { p: p, e: r.e };
+      var slot = names.indexOf(p);
+      r.role = p === UNASSIGNED ? "unassigned" : slot >= 0 ? "p" + (slot + 1)
+        : r.cat === "private" ? "private" : r.cat === "distraction" ? "drift" : "other";
+    });
+
     var laptop = day.segs.filter(function (r) { return r.dev === "laptop"; });
     var phone = day.segs.filter(function (r) { return r.dev === "phone"; });
-    var phoneDrift = phone.filter(function (r) { return r.role === "drift"; });
-    var focus = laptop.filter(function (r) { return r.role === "focus"; });
+    // The phone beats the laptop: while a phone app is open, the window behind it isn't what you're looking at.
+    function minutes(r) {
+      if (r.dev === "phone") return r.d;
+      var m = r.d;
+      phone.forEach(function (p) { m -= overlap(r, p); });
+      return Math.max(0, m);
+    }
+    var byProject = {};
+    day.segs.forEach(function (r) {
+      if (!r.project) return;
+      byProject[r.project] = (byProject[r.project] || 0) + minutes(r);
+    });
+    var tracked = Object.keys(byProject).reduce(function (a, k) { return a + byProject[k]; }, 0);
 
-    function focusAt(m) { return focus.some(function (r) { return r.s <= m && m < r.e + 2; }); }
-
-    var lost = 0;
-    focus.forEach(function (f) { phoneDrift.forEach(function (p) { lost += overlap(f, p); }); });
-    var onTask = focus.reduce(function (a, r) { return a + r.d; }, 0) - lost;
-
-    // Longest unbroken stretch of focus: anything off task on the laptop, a
-    // distraction on the phone, a pause or going idle ends it.
-    var best = { len: 0, s: 0, e: 0 }, cur = null;
-    var breaks = laptop.filter(function (r) { return r.role !== "focus"; }).concat(phoneDrift, day.idle, day.lock, day.pause ? [day.pause] : []);
+    // Longest unbroken stretch on each project: the phone, another project,
+    // anything else, a pause, going idle or a gap ends it.
+    var stretch = {};
+    var breaks = phone.concat(day.idle, day.lock, day.pause ? [day.pause] : []);
+    var run = null;
+    function close() {
+      if (run && run.e - run.s > (stretch[run.p] ? stretch[run.p].len : 0)) stretch[run.p] = { len: run.e - run.s, s: run.s, e: run.e };
+    }
     laptop.forEach(function (r) {
-      if (r.role !== "focus") { cur = null; return; }
-      var pieces = [{ s: r.s, e: r.e }];
+      var pieces = r.project ? [{ s: r.s, e: r.e }] : [];
       breaks.forEach(function (b) {
-        pieces = pieces.reduce(function (out, p) {
-          if (overlap(p, b) === 0) { out.push(p); return out; }
-          if (b.s > p.s) out.push({ s: p.s, e: b.s });
-          if (b.e < p.e) out.push({ s: b.e, e: p.e });
+        pieces = pieces.reduce(function (out, x) {
+          if (overlap(x, b) === 0) { out.push(x); return out; }
+          if (b.s > x.s) out.push({ s: x.s, e: b.s });
+          if (b.e < x.e) out.push({ s: b.e, e: x.e });
           return out;
         }, []);
       });
-      pieces.forEach(function (p) {
-        if (cur && p.s - cur.e <= 2) cur.e = p.e; else cur = { s: p.s, e: p.e };
-        if (cur.e - cur.s > best.len) best = { len: cur.e - cur.s, s: cur.s, e: cur.e };
+      if (!pieces.length) { close(); run = null; return; }
+      pieces.forEach(function (x) {
+        var broken = run && breaks.some(function (b) { return b.s < x.s && b.e > run.e; });
+        if (run && run.p === r.project && x.s - run.e <= 2 && !broken) run.e = x.e;
+        else { close(); run = { p: r.project, s: x.s, e: x.e }; }
       });
     });
+    close();
 
+    // Interruptions: every time something pulled me off focus work, and the project I was on.
+    var focusSegs = laptop.filter(function (r) { return r.focus; });
+    function focusAt(m) { return focusSegs.some(function (r) { return r.s <= m && m < r.e + 2; }); }
     var episodes = [];
     day.segs.forEach(function (r) {
-      if (r.role === "focus" || r.role === "private" || !focusAt(r.s)) return;
-      // A phone pick-up while the laptop is already off task is part of that detour.
-      if (r.dev === "phone" && laptop.some(function (l) { return l.role !== "focus" && l.s <= r.s && r.s < l.e; })) return;
-      var left = focus.filter(function (f) { return f.s <= r.s; }).pop();
+      if (r.focus || r.cat === "private" || !focusAt(r.s)) return;
+      if (r.dev === "phone" && laptop.some(function (l) { return !l.focus && l.s <= r.s && r.s < l.e; })) return;
+      var left = focusSegs.filter(function (f) { return f.s <= r.s; }).pop();
       if (!left) return;
-      var back = focus.filter(function (f) { return f.s >= r.e - 1 && f !== left; })[0];
+      var back = focusSegs.filter(function (f) { return f.s >= r.e - 1 && f !== left; })[0];
       var stillOn = r.dev === "phone" && left.e > r.e;
-      var kind = r.role === "drift" ? "Distraction" : r.dev === "phone" ? "Phone check" : "Detour";
-      episodes.push({ r: r, kind: kind, left: left.label, back: stillOn ? left.label : back ? back.label : "Stayed away" });
+      var kind = r.cat === "distraction" ? "Distraction" : r.dev === "phone" ? "Phone check" : "Detour";
+      episodes.push({ r: r, kind: kind, left: left, project: left.project,
+        back: stillOn ? left.label : back ? back.label : "Didn't go back" });
     });
+
+    var perProject = {};
+    Object.keys(byProject).forEach(function (p) {
+      var eps = episodes.filter(function (e) { return e.project === p; });
+      var pulls = {};
+      eps.forEach(function (e) {
+        var k = e.r.label + (e.r.dev === "phone" ? " (phone)" : "");
+        pulls[k] = (pulls[k] || 0) + 1;
+      });
+      var top = Object.keys(pulls).sort(function (a, b) { return pulls[b] - pulls[a]; })[0] || "–";
+      perProject[p] = {
+        name: p, min: byProject[p], share: tracked ? byProject[p] / tracked : 0,
+        stretch: stretch[p] ? stretch[p].len : 0, interruptions: eps.length,
+        distractions: eps.filter(function (e) { return e.kind === "Distraction"; }).length, top: top
+      };
+    });
+    var order = Object.keys(perProject).sort(function (a, b) {
+      if (a === UNASSIGNED) return 1;
+      if (b === UNASSIGNED) return -1;
+      return byProject[b] - byProject[a];
+    });
+    var best = { len: 0 };
+    Object.keys(stretch).forEach(function (p) { if (stretch[p].len > best.len) best = Object.assign({ p: p }, stretch[p]); });
 
     var n = 0;
     for (var i = 1; i < day.segs.length; i++) if (day.segs[i].label !== day.segs[i - 1].label) n++;
 
     return {
-      day: day, laptop: laptop, phone: phone, onTask: onTask, longest: best, episodes: episodes,
+      day: day, laptop: laptop, phone: phone, tracked: tracked, perProject: perProject, order: order,
+      longest: best, episodes: episodes, minutes: minutes, names: names,
       switches: n / (day.span / 60),
       distractions: episodes.filter(function (e) { return e.kind === "Distraction"; }).length,
       checks: episodes.filter(function (e) { return e.kind === "Phone check"; }).length
     };
   }
-
-  // Focus minutes in each hour of a day, for the week heat map.
-  function focusByHour(day, cats) {
-    var a = analyse(day, cats), hours = [];
-    var phoneDrift = a.phone.filter(function (r) { return r.role === "drift"; });
-    for (var h = 0; h < Math.ceil(day.span / 60); h++) {
-      var w = { s: h * 60, e: h * 60 + 60 }, m = 0;
-      a.laptop.forEach(function (r) {
-        if (r.role !== "focus") return;
-        var o = { s: Math.max(r.s, w.s), e: Math.min(r.e, w.e) };
-        if (o.e <= o.s) return;
-        m += o.e - o.s;
-        phoneDrift.forEach(function (p) { m -= overlap(o, p); });
-      });
-      hours.push(Math.max(0, m));
-    }
-    return hours;
+  function roleOf(name, names) {
+    if (name === UNASSIGNED) return "unassigned";
+    var i = names.indexOf(name);
+    return i >= 0 ? "p" + (i + 1) : "other";
   }
 
   // ---- One preview window ----
   function mount(scope, opts) {
     var win = scope.querySelector(".al-window");
-    var day = prepare(opts.day), cats = opts.categories;
+    var day = prepare(opts.day), cfg = opts.config;
     var pick = function (name) { return scope.querySelector('[data-al="' + name + '"]'); };
 
     var tip = el("div", "al-tip");
@@ -172,24 +220,22 @@ window.ALedger = (function () {
       lane.appendChild(b);
       return b;
     }
-    function focusLabel() {
-      return "Focus (" + cats.focus.map(function (c) { return CAT_NAMES[c].toLowerCase(); }).join(", ") + ")";
-    }
-    var groupBy = "category";
+    var groupBy = "project";
 
     function draw() {
-      var a = analyse(day, cats), clock = clockOf(day), iso = isoOf(day);
+      var a = analyse(day, cfg), clock = clockOf(day), iso = isoOf(day);
       hideTip();
 
       var tiles = pick("tiles");
       if (tiles) {
         tiles.textContent = "";
+        var topName = a.order.filter(function (p) { return p !== UNASSIGNED; })[0];
+        var top = topName ? a.perProject[topName] : null;
         [
-          ["On a task", hm(a.onTask)],
-          ["Longest focus", hm(a.longest.len), a.longest.len ? clock(a.longest.s) + " to " + clock(a.longest.e) : ""],
-          ["Switches per hour", a.switches.toFixed(1)],
-          ["Distractions", String(a.distractions)],
-          ["Phone checks", String(a.checks)]
+          ["Tracked work", hm(a.tracked), "no timers, no entries"],
+          ["Most time on", top ? top.name : "–", top ? hm(top.min) + " · " + Math.round(top.share * 100) + "%" : ""],
+          ["Longest stretch", hm(a.longest.len), a.longest.len ? a.longest.p + ", " + clock(a.longest.s) : ""],
+          ["Interruptions", String(a.episodes.length), a.distractions + " distraction" + (a.distractions === 1 ? "" : "s") + " · " + a.checks + " phone check" + (a.checks === 1 ? "" : "s")]
         ].forEach(function (t) {
           var d = el("div", "al-tile");
           d.appendChild(el("span", "al-tile-label", t[0]));
@@ -217,7 +263,7 @@ window.ALedger = (function () {
           });
           day.segs.filter(function (r) { return r.dev === dv[0]; }).forEach(function (r) {
             var b = block(lane, r.s, r.e, "al-c-" + r.role);
-            hoverable(b, hm(r.d), r.label + " · " + CAT_NAMES[r.cat] + " · " + clock(r.s) + " to " + clock(r.e));
+            hoverable(b, hm(r.d), r.label + " · " + (r.project || CAT_NAMES[r.cat]) + " · " + clock(r.s) + " to " + clock(r.e));
           });
           row.appendChild(lane);
           tl.appendChild(row);
@@ -240,43 +286,77 @@ window.ALedger = (function () {
       var legend = pick("legend");
       if (legend) {
         legend.textContent = "";
-        [["focus", focusLabel()], ["comm", "Communication"], ["drift", "Distraction"], ["other", "Other"], ["private", "Private"], ["paused", "Paused"], ["locked", "Locked"]]
-          .forEach(function (k) {
-            if (k[0] === "locked" && !day.lock.length) return;
-            if (k[0] === "paused" && !day.pause) return;
-            var li = el("li");
-            li.appendChild(el("span", "al-key " + (k[0] === "paused" ? "al-paused" : k[0] === "locked" ? "al-locked" : "al-c-" + k[0])));
-            li.appendChild(document.createTextNode(k[1]));
-            legend.appendChild(li);
-          });
+        var present = {};
+        day.segs.forEach(function (r) { present[r.role] = true; });
+        var keys = a.names.map(function (n, i) { return ["p" + (i + 1), n]; })
+          .concat([["unassigned", "Unassigned work"], ["drift", "Distraction"], ["other", "Not project time"], ["private", "Private"]])
+          .filter(function (k) { return present[k[0]]; });
+        if (day.pause) keys.push(["paused", "Paused"]);
+        if (day.lock.length) keys.push(["locked", "Locked"]);
+        keys.forEach(function (k) {
+          var li = el("li");
+          li.appendChild(el("span", "al-key " + (k[0] === "paused" ? "al-paused" : k[0] === "locked" ? "al-locked" : "al-c-" + k[0])));
+          li.appendChild(document.createTextNode(k[1]));
+          legend.appendChild(li);
+        });
       }
 
       var bars = pick("bars");
       if (bars) {
-        var map = {};
-        day.segs.forEach(function (r) {
-          var key = groupBy === "category" ? r.cat : groupBy === "device" ? r.dev : r.label;
-          if (!map[key]) map[key] = { key: key, min: 0, role: r.role };
-          map[key].min += r.d;
-        });
-        var g = Object.keys(map).map(function (k) { return map[k]; });
-        g.sort(function (x, y) { return y.min - x.min; });
-        if (groupBy === "category") g.sort(function (x, y) { return CAT_ORDER.indexOf(x.key) - CAT_ORDER.indexOf(y.key); });
-        if (groupBy === "label") g = g.slice(0, 10);
-        var max = Math.max.apply(null, g.map(function (x) { return x.min; }));
         bars.textContent = "";
-        g.forEach(function (x) {
-          var name = groupBy === "category" ? CAT_NAMES[x.key] : groupBy === "device" ? (x.key === "laptop" ? "Laptop" : "iPhone") : x.key;
-          var li = el("li", "al-bar-row");
-          li.appendChild(el("span", "al-bar-name", name));
-          var track = el("span", "al-bar-track");
-          var bar = el("span", "al-bar " + (groupBy === "device" ? "al-c-device" : "al-c-" + x.role));
-          bar.style.width = (x.min / max * 100) + "%";
-          track.appendChild(bar);
-          li.appendChild(track);
-          li.appendChild(el("span", "al-bar-value", hm(x.min)));
-          bars.appendChild(li);
-        });
+        var head = scope.querySelector('[data-al="bars-head"]');
+        if (groupBy === "project") {
+          if (head) head.hidden = false;
+          bars.classList.add("al-bars-projects");
+          var maxP = Math.max.apply(null, a.order.map(function (p) { return a.perProject[p].min; }).concat([1]));
+          a.order.forEach(function (p) {
+            var x = a.perProject[p];
+            var li = el("li", "al-bar-row al-proj-row");
+            li.appendChild(el("span", "al-bar-name", x.name));
+            var track = el("span", "al-bar-track");
+            var bar = el("span", "al-bar al-c-" + roleOf(p, a.names));
+            bar.style.width = (x.min / maxP * 100) + "%";
+            track.appendChild(bar);
+            li.appendChild(track);
+            li.appendChild(el("span", "al-bar-value", hm(x.min) + " · " + Math.round(x.share * 100) + "%"));
+            var facts = el("span", "al-proj-facts");
+            [["Longest stretch", hm(x.stretch)], ["Interruptions", String(x.interruptions) + (x.distractions ? " (" + x.distractions + " distraction" + (x.distractions === 1 ? "" : "s") + ")" : "")],
+              ["Pulled off most by", x.top]].forEach(function (f) {
+              var s = el("span");
+              s.appendChild(el("b", null, f[0] + " "));
+              s.appendChild(document.createTextNode(f[1]));
+              facts.appendChild(s);
+            });
+            li.appendChild(facts);
+            bars.appendChild(li);
+          });
+        } else {
+          if (head) head.hidden = true;
+          bars.classList.remove("al-bars-projects");
+          var map = {};
+          day.segs.forEach(function (r) {
+            var key = groupBy === "category" ? r.cat : groupBy === "device" ? r.dev : r.label;
+            if (!map[key]) map[key] = { key: key, min: 0, role: r.role };
+            map[key].min += a.minutes(r);
+          });
+          var g = Object.keys(map).map(function (k) { return map[k]; }).filter(function (x) { return x.min > 0; });
+          g.sort(function (x, y) { return y.min - x.min; });
+          if (groupBy === "category") g.sort(function (x, y) { return CAT_ORDER.indexOf(x.key) - CAT_ORDER.indexOf(y.key); });
+          if (groupBy === "label") g = g.slice(0, 10);
+          var max = Math.max.apply(null, g.map(function (x) { return x.min; }));
+          g.forEach(function (x) {
+            var name = groupBy === "category" ? CAT_NAMES[x.key] : groupBy === "device" ? (x.key === "laptop" ? "Laptop" : "iPhone") : x.key;
+            var li = el("li", "al-bar-row");
+            li.appendChild(el("span", "al-bar-name", name));
+            var track = el("span", "al-bar-track");
+            var bar = el("span", "al-bar " + (groupBy === "label" ? "al-c-" + x.role : "al-c-device"));
+            bar.style.width = (x.min / max * 100) + "%";
+            track.appendChild(bar);
+            li.appendChild(track);
+            li.appendChild(el("span", "al-bar-value", hm(x.min)));
+            bars.appendChild(li);
+          });
+        }
       }
 
       var drift = pick("drift");
@@ -285,16 +365,19 @@ window.ALedger = (function () {
         body.textContent = "";
         if (!a.episodes.length) {
           var tr0 = el("tr"), td0 = el("td", null, "Nothing pulled me away.");
-          td0.colSpan = 7;
+          td0.colSpan = 8;
           tr0.appendChild(td0);
           body.appendChild(tr0);
         }
         a.episodes.forEach(function (e) {
           var tr = el("tr");
-          [clock(e.r.s), e.kind, e.left, e.r.label, e.r.dev === "phone" ? "iPhone" : "Laptop", hm(e.r.d), e.back].forEach(function (v, i) {
-            var td = el("td", i === 5 ? "num" : null);
+          [clock(e.r.s), e.kind, e.project || "–", e.left.label, e.r.label, e.r.dev === "phone" ? "iPhone" : "Laptop", hm(e.r.d), e.back].forEach(function (v, i) {
+            var td = el("td", i === 6 ? "num" : null);
             if (i === 1) td.appendChild(el("span", "al-kind" + (e.kind === "Distraction" ? " al-kind-drift" : ""), v));
-            else td.textContent = v;
+            else if (i === 2) {
+              td.appendChild(el("span", "al-key al-c-" + roleOf(v, a.names)));
+              td.appendChild(document.createTextNode(" " + v));
+            } else td.textContent = v;
             tr.appendChild(td);
           });
           body.appendChild(tr);
@@ -318,7 +401,9 @@ window.ALedger = (function () {
           } else if (isDomain(r.label)) {
             line(r.s, "laptop", "browser-extension", { event: "span", app: "msedge.exe", domain: r.label, duration_s: r.d * 60 });
           } else {
-            line(r.s, "laptop", "desktop-agent", { event: "span", app: EXE[r.label] || r.label + ".exe", duration_s: r.d * 60 });
+            var o = { event: "span", app: EXE[appOf(r.label)] || appOf(r.label) + ".exe", duration_s: r.d * 60 };
+            if (r.label.indexOf(" · ") > 0) o.title = r.label.split(" · ")[1];
+            line(r.s, "laptop", "desktop-agent", o);
           }
         });
         day.idle.forEach(function (x) {
@@ -337,7 +422,7 @@ window.ALedger = (function () {
         log.textContent = lines.map(function (l) { return l.text; }).join("\n");
       }
 
-      var thumb = scope.querySelector(".al-thumb") || (opts.thumb || null);
+      var thumb = scope.querySelector(".al-thumb");
       if (thumb) {
         thumb.textContent = "";
         var mini = el("span", "al-mini");
@@ -401,7 +486,7 @@ window.ALedger = (function () {
     draw();
     return {
       setDay: function (raw) { day = prepare(raw); draw(); },
-      setCategories: function (c) { cats = c; draw(); }
+      setConfig: function (c) { cfg = c; draw(); }
     };
   }
 
@@ -409,22 +494,30 @@ window.ALedger = (function () {
   var MONDAY = {
     date: "2026-11-09", start: 9 * 60, span: 240,
     segs: [
-      [0, 25, "laptop", "VS Code"], [25, 4, "laptop", "github.com"], [31, 9, "phone", "Instagram"],
-      [41, 2, "laptop", "Private"], [58, 37, "laptop", "VS Code"], [78, 2, "phone", "Messages"],
-      [95, 8, "laptop", "youtube.com"], [103, 37, "laptop", "docs.google.com"], [120, 1, "phone", "Clock"],
-      [140, 12, "laptop", "web.whatsapp.com"], [141, 7, "phone", "WhatsApp"], [152, 38, "laptop", "linkedin.com"],
-      [170, 8, "phone", "Instagram"], [190, 6, "laptop", "amazon.com"], [196, 39, "laptop", "VS Code"]
+      [0, 25, "laptop", "VS Code · inventory-app"], [25, 4, "laptop", "github.com"], [31, 9, "phone", "Instagram"],
+      [41, 2, "laptop", "Private"], [58, 37, "laptop", "VS Code · inventory-app"], [78, 2, "phone", "Messages"],
+      [95, 8, "laptop", "youtube.com"], [103, 15, "laptop", "docs.google.com"], [118, 22, "laptop", "Teams"],
+      [120, 1, "phone", "Clock"], [140, 12, "laptop", "web.whatsapp.com"], [141, 7, "phone", "WhatsApp"],
+      [152, 38, "laptop", "VS Code · portfolio-site"], [170, 8, "phone", "Instagram"], [190, 6, "laptop", "amazon.com"],
+      [196, 39, "laptop", "VS Code · portfolio-site"]
     ],
     pause: { s: 43, e: 58, scope: "all" },
     idle: [{ s: 29, e: 41 }],
     lock: [{ s: 235, e: 240 }]
   };
-  var CATEGORIES = {
+  // My projects and categories, as projects.toml and categories.toml would hold them.
+  var CONFIG = {
     focus: ["work", "career"],
+    carry: 10,
+    projects: [
+      { name: "Inventory app", match: ["VS Code · inventory-app", "inventory.example.com"] },
+      { name: "Portfolio site", match: ["VS Code · portfolio-site", "sriharish252.github.io"] },
+      { name: "Meetings and email", match: ["Teams", "Outlook", "Slack", "mail.google.com", "calendar.google.com", "Zoom"] }
+    ],
     map: {
       "VS Code": "work", "github.com": "work", "docs.google.com": "work", Slack: "work", Outlook: "work",
       Teams: "work", Terminal: "work", Postman: "work", "stackoverflow.com": "work", "mail.google.com": "work",
-      "linkedin.com": "career", "greenhouse.io": "career", "myworkdayjobs.com": "career", LinkedIn: "career",
+      "calendar.google.com": "work", Zoom: "work", "linkedin.com": "career",
       "youtube.com": "distraction", "reddit.com": "distraction", Instagram: "distraction", YouTube: "distraction", Reddit: "distraction",
       Messages: "communication", WhatsApp: "communication", "web.whatsapp.com": "communication",
       Spotify: "music", "amazon.com": "personal", Amazon: "personal", Photos: "personal",
@@ -432,11 +525,11 @@ window.ALedger = (function () {
     }
   };
 
-  return { mount: mount, analyse: analyse, focusByHour: focusByHour, prepare: prepare, hm: hm,
-    CAT_NAMES: CAT_NAMES, CAT_ORDER: CAT_ORDER, MONDAY: MONDAY, CATEGORIES: CATEGORIES };
+  return { mount: mount, analyse: analyse, prepare: prepare, hm: hm, roleOf: roleOf, UNASSIGNED: UNASSIGNED,
+    CAT_NAMES: CAT_NAMES, CAT_ORDER: CAT_ORDER, MONDAY: MONDAY, CONFIG: CONFIG };
 })();
 
 (function () {
   var row = document.getElementById("attention-ledger");
-  if (row) window.ALedger.mount(row, { day: window.ALedger.MONDAY, categories: window.ALedger.CATEGORIES });
+  if (row) window.ALedger.mount(row, { day: window.ALedger.MONDAY, config: window.ALedger.CONFIG });
 })();

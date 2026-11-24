@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Attention Ledger | Sri Harish Jayaram</title>
-  <meta name="description" content="A private, self-hosted record of where my time goes across my Windows laptop and iPhone. Its data stays on my own devices and my own iCloud Drive, and it reports only to me.">
+  <meta name="description" content="Automatic time tracking across my Windows laptop and iPhone: where my time went, project by project, with no timers. Its data stays on my own devices and my own iCloud Drive.">
   <link rel="canonical" href="https://sriharish252.github.io/attention-ledger/">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://sriharish252.github.io/attention-ledger/">
   <meta property="og:title" content="Attention Ledger | Sri Harish Jayaram">
-  <meta property="og:description" content="A private time tracker for my laptop and iPhone, kept on my own devices and my own iCloud Drive.">
+  <meta property="og:description" content="Automatic, private time tracking per project across my laptop and iPhone, kept on my own devices and my own iCloud Drive.">
   <meta property="og:image" content="https://sriharish252.github.io/assets/img/og.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#dceaf0" media="(prefers-color-scheme: light)">
@@ -52,7 +52,7 @@
       </h1>
       <div class="hero-foot">
         <div class="hero-intro">
-          <p class="lede">A private record of where my time and attention actually go across my Windows laptop and iPhone. Small collectors on each device write to storage I own, my laptop and my own iCloud Drive, and the only reports it ever produces are exported for me to read.</p>
+          <p class="lede">Automatic time tracking across my Windows laptop and iPhone. It shows where my time actually went, project by project, without a timer or a timesheet, and what kept breaking up the long work. Small collectors on each device write only to storage I own, and the reports are exported for me alone.</p>
           <p class="actions">
             <a class="button" href="#try">Try the examples</a>
             <a class="button button-line" href="https://github.com/sriharish252/attention-ledger-overview" target="_blank" rel="noopener">Design notes on GitHub</a>
@@ -70,23 +70,23 @@
     <section class="section wrap split" id="why" aria-labelledby="why-title">
       <h2 id="why-title" class="section-title">Why</h2>
       <div class="al-why">
-        <p class="al-big">Screen-time apps tell you how long each app was open. I wanted to know what I was actually doing, when I drifted, and what pulled me away, across both screens at once, without handing a minute-by-minute record of my life to anyone.</p>
+        <p class="al-big">I never really knew where my week went. Timers and timesheets only work if you remember them, and my sense of which project took the most time was often off. Attention Ledger answers three questions on its own, and keeps the answers to itself.</p>
         <div class="areas">
           <article class="area">
-            <h3>Private by design</h3>
-            <p>No keystrokes, screenshots, audio, message content, full web addresses or raw window titles, ever. Only app names, website domains and cleaned titles for apps I allow.</p>
+            <h3>Where did the time go?</h3>
+            <p>Time on each project across both screens, sorted automatically by VS Code workspace, site or app. Nothing to start, stop or fill in.</p>
           </article>
           <article class="area">
-            <h3>Only storage I own</h3>
-            <p>A database on my laptop and a folder in my own iCloud Drive. No telemetry, no accounts, no servers, no third-party analytics.</p>
+            <h3>Is it what I thought?</h3>
+            <p>Next to my own guess, the real number shows where my sense of the week is off, and which projects quietly take more or less than I'd say.</p>
           </article>
           <article class="area">
-            <h3>I stay in control</h3>
-            <p>Pause one device or all of them from any of them. Block any app or site, and it is logged only as <em>Private</em> so the day still adds up.</p>
+            <h3>What keeps breaking it up?</h3>
+            <p>Each project's longest unbroken stretch, how often it was interrupted and by what, phone included. It shows which work never gets a clean block of time.</p>
           </article>
           <article class="area">
-            <h3>Independent parts</h3>
-            <p>Each collector was built, tested and used on its own device for at least a day before any data was combined.</p>
+            <h3>Without giving it away</h3>
+            <p>No keystrokes, screenshots, message content, full addresses or raw window titles. Everything stays on my devices and in my own iCloud Drive.</p>
           </article>
         </div>
       </div>
@@ -112,8 +112,8 @@
             </section>
             <section class="al-stage" aria-label="Review">
               <h3 class="al-stage-title"><span>3</span> Review</h3>
-              <div class="al-node"><strong>One timeline</strong><span>Both devices merged minute by minute, every app and site sorted into categories I choose</span></div>
-              <div class="al-node al-node-out"><strong>Exports, for me</strong><span>A daily report and a spreadsheet of every distraction, written to a folder on my laptop that is never synced or committed anywhere</span></div>
+              <div class="al-node"><strong>Sorted into projects</strong><span>Both devices merged into one timeline, and every piece matched to a project by its VS Code workspace, site or app. Shared sites like GitHub carry on the project I was just on</span></div>
+              <div class="al-node al-node-out"><strong>Exports, for me</strong><span>A report of time per project, plus spreadsheets of every piece of the day and every interruption, in a folder on my laptop that is never synced or committed anywhere</span></div>
             </section>
           </div>
         </div>
@@ -155,8 +155,8 @@
           <h3>Analysis</h3>
           <dl>
             <div><dt>Reads</dt><dd>The day files from both devices, and nothing else</dd></div>
-            <div><dt>Works out</dt><dd>Time on a task, switches per hour, the longest focus stretch, every distraction and phone check</dd></div>
-            <div><dt>Writes to</dt><dd>A report and a spreadsheet file in a folder on my laptop</dd></div>
+            <div><dt>Works out</dt><dd>Time per project, the longest unbroken stretch on each, every interruption and what caused it, switches per hour</dd></div>
+            <div><dt>Writes to</dt><dd>A report and two spreadsheets, of every piece of the day and every interruption, in a folder on my laptop</dd></div>
             <div><dt>Needs</dt><dd>Python and nothing to install: no packages, no network</dd></div>
           </dl>
         </article>
@@ -174,7 +174,7 @@
               <tr><td>Database on my laptop</td><td>Laptop and browser events</td><td>30 days</td><td>Me, on my Windows account</td></tr>
               <tr><td>The browser's own storage</td><td>A queue for the agent, and its own copy</td><td>7 days</td><td>Me, in that browser profile</td></tr>
               <tr><td>My iCloud Drive folder</td><td>The phone's day files, the block list, the pause switch</td><td>Until I delete them</td><td>Me, on my Apple account</td></tr>
-              <tr><td>A logs folder on my laptop</td><td>Day files, reports, the distractions spreadsheet, my categories</td><td>Until I delete them</td><td>Me. Ignored by git, so never committed</td></tr>
+              <tr><td>A logs folder on my laptop</td><td>Day files, reports, the time and interruption spreadsheets, my projects and categories</td><td>Until I delete them</td><td>Me. Ignored by git, so never committed</td></tr>
             </tbody>
           </table>
         </div>
@@ -205,11 +205,11 @@
       <article class="al-demo" id="week" aria-labelledby="week-title">
         <header class="al-demo-head">
           <p class="al-demo-num">01</p>
-          <h3 id="week-title" class="al-demo-title">A sample week</h3>
-          <p class="al-demo-lede">Focus by the hour across a working week. Pick a day, or a cell, to open it below and see it the four ways the report does.</p>
+          <h3 id="week-title" class="al-demo-title">Where the week went</h3>
+          <p class="al-demo-lede">A sample working week, sorted into projects with nothing tracked by hand. Pick a day to open it below and see it the way the report does.</p>
         </header>
-        <div class="al-heat" id="al-heat" role="group" aria-label="Focus minutes per hour, Monday to Friday"></div>
         <div class="al-week-tiles al-tiles" id="al-week-tiles"></div>
+        <div class="al-weekbars" id="al-weekbars" role="group" aria-label="Time per project, Monday to Friday"></div>
 
         <figure class="al-preview" id="al-explorer" aria-labelledby="al-explorer-cap">
           <div class="al-seg al-days" role="radiogroup" aria-label="Day">
@@ -225,29 +225,30 @@
               <span class="al-window-title" id="al-day-title">Attention Ledger · Monday</span>
             </div>
             <div class="al-tabs" role="tablist" aria-label="Report views" hidden>
-              <button type="button" role="tab" id="al-tab-timeline" aria-controls="al-panel-timeline" aria-selected="true">Timeline</button>
-              <button type="button" role="tab" id="al-tab-group" aria-controls="al-panel-group" aria-selected="false" tabindex="-1">Group by</button>
-              <button type="button" role="tab" id="al-tab-drift" aria-controls="al-panel-drift" aria-selected="false" tabindex="-1">Distractions</button>
+              <button type="button" role="tab" id="al-tab-projects" aria-controls="al-panel-projects" aria-selected="true">Projects</button>
+              <button type="button" role="tab" id="al-tab-timeline" aria-controls="al-panel-timeline" aria-selected="false" tabindex="-1">Timeline</button>
+              <button type="button" role="tab" id="al-tab-drift" aria-controls="al-panel-drift" aria-selected="false" tabindex="-1">Interruptions</button>
               <button type="button" role="tab" id="al-tab-log" aria-controls="al-panel-log" aria-selected="false" tabindex="-1">Raw log</button>
             </div>
-            <div class="al-panel" id="al-panel-timeline" role="tabpanel" aria-labelledby="al-tab-timeline">
+            <div class="al-panel" id="al-panel-projects" role="tabpanel" aria-labelledby="al-tab-projects">
               <div class="al-tiles" data-al="tiles"></div>
-              <div class="al-timeline" data-al="timeline"></div>
-              <ul class="al-legend" data-al="legend"></ul>
-            </div>
-            <div class="al-panel" id="al-panel-group" role="tabpanel" aria-labelledby="al-tab-group">
               <div class="al-seg" role="radiogroup" aria-label="Group time by">
-                <label><input type="radio" name="al-group" value="category" checked> Category</label>
+                <label><input type="radio" name="al-group" value="project" checked> Project</label>
+                <label><input type="radio" name="al-group" value="category"> Category</label>
                 <label><input type="radio" name="al-group" value="device"> Device</label>
                 <label><input type="radio" name="al-group" value="label"> App or site</label>
               </div>
               <ol class="al-bars" data-al="bars"></ol>
             </div>
+            <div class="al-panel" id="al-panel-timeline" role="tabpanel" aria-labelledby="al-tab-timeline">
+              <div class="al-timeline" data-al="timeline"></div>
+              <ul class="al-legend" data-al="legend"></ul>
+            </div>
             <div class="al-panel" id="al-panel-drift" role="tabpanel" aria-labelledby="al-tab-drift">
               <div class="al-table-wrap">
                 <table class="al-table" data-al="drift">
-                  <caption>Every time I left a task, and whether I came back</caption>
-                  <thead><tr><th scope="col">Time</th><th scope="col">Kind</th><th scope="col">Left</th><th scope="col">For</th><th scope="col">On</th><th scope="col" class="num">Away</th><th scope="col">Came back to</th></tr></thead>
+                  <caption>Every time something pulled me off a project, and whether I came back</caption>
+                  <thead><tr><th scope="col">Time</th><th scope="col">Kind</th><th scope="col">Project</th><th scope="col">Left</th><th scope="col">For</th><th scope="col">On</th><th scope="col" class="num">Away</th><th scope="col">Came back to</th></tr></thead>
                   <tbody></tbody>
                 </table>
               </div>
@@ -260,25 +261,32 @@
         </figure>
       </article>
 
-      <article class="al-demo" id="categories" aria-labelledby="cats-title">
+      <article class="al-demo" id="guess" aria-labelledby="guess-title">
         <header class="al-demo-head">
           <p class="al-demo-num">02</p>
-          <h3 id="cats-title" class="al-demo-title">Sort it your way</h3>
-          <p class="al-demo-lede">What counts as work is mine to decide. Move an app or site to another category, or change which categories count as focus, and the week above regroups at once, the way every past day regroups the next time the real report runs.</p>
+          <h3 id="guess-title" class="al-demo-title">Is it what I thought?</h3>
+          <p class="al-demo-lede">Before looking, guess how long each project took this week. The dashed outline is your guess; the bar is what actually happened. The tracker only knows the real number, so the guesses here are yours to set.</p>
+        </header>
+        <div class="al-guess" id="al-guess"></div>
+        <p class="al-verdict-line" id="al-guess-sum" aria-live="polite"></p>
+      </article>
+
+      <article class="al-demo" id="rules-editor" aria-labelledby="cats-title">
+        <header class="al-demo-head">
+          <p class="al-demo-num">03</p>
+          <h3 id="cats-title" class="al-demo-title">Your projects, your rules</h3>
+          <p class="al-demo-lede">Projects are a short settings file: a VS Code workspace, a site or an app for each. Move anything to another project and the week above regroups at once, the way every past day regroups the next time the real report runs.</p>
         </header>
         <div class="al-cats">
-          <fieldset class="al-focus-pick">
-            <legend class="al-mini-title">Counts as focus</legend>
-            <div class="al-checks" id="al-focus-checks"></div>
-          </fieldset>
+          <label class="al-check"><input type="checkbox" id="al-carry" checked> Shared work sites, like GitHub or Stack Overflow, carry on the project I was on in the last 10 minutes</label>
           <div class="al-cat-list" id="al-cat-list"></div>
-          <p><button type="button" class="button button-line al-small-btn" id="al-cat-reset">Reset to my defaults</button></p>
+          <p><button type="button" class="button button-line al-small-btn" id="al-cat-reset">Reset to my projects</button></p>
         </div>
       </article>
 
       <article class="al-demo" id="filter" aria-labelledby="filter-title">
         <header class="al-demo-head">
-          <p class="al-demo-num">03</p>
+          <p class="al-demo-num">04</p>
           <h3 id="filter-title" class="al-demo-title">What actually gets stored</h3>
           <p class="al-demo-lede">Type what a device sees, and watch what survives. This follows the same rules the collectors use, so you can try to sneak something through.</p>
         </header>
@@ -331,9 +339,9 @@
 
       <article class="al-demo" id="rules" aria-labelledby="rules-title">
         <header class="al-demo-head">
-          <p class="al-demo-num">04</p>
-          <h3 id="rules-title" class="al-demo-title">Does that count as a distraction?</h3>
-          <p class="al-demo-lede">I'm working in VS Code. Something pulls me away. Whether the report counts it depends on what, where and for how long.</p>
+          <p class="al-demo-num">05</p>
+          <h3 id="rules-title" class="al-demo-title">What counts as an interruption?</h3>
+          <p class="al-demo-lede">I'm working on the inventory app in VS Code. Something pulls me away. Whether the report counts it against that project, and how, depends on what, where and for how long.</p>
         </header>
         <div class="al-play" id="al-rules">
           <div class="al-play-in">
@@ -366,7 +374,7 @@
 
       <article class="al-demo" id="schema" aria-labelledby="schema-title">
         <header class="al-demo-head">
-          <p class="al-demo-num">05</p>
+          <p class="al-demo-num">06</p>
           <h3 id="schema-title" class="al-demo-title">The format says no</h3>
           <p class="al-demo-lede">Every collector writes one strict line format, and every day file is checked against it. Edit the line, or pick an example, and see whether it would pass.</p>
         </header>
@@ -391,7 +399,7 @@
 
       <article class="al-demo" id="pause" aria-labelledby="pause-title">
         <header class="al-demo-head">
-          <p class="al-demo-num">06</p>
+          <p class="al-demo-num">07</p>
           <h3 id="pause-title" class="al-demo-title">Pause one, or all of them</h3>
           <p class="al-demo-lede">A pause can start on any device. A pause for all devices travels through a small switch file in my own iCloud Drive folder, so no server is ever involved.</p>
         </header>
@@ -432,6 +440,13 @@
     <section class="section wrap split" id="notes" aria-labelledby="notes-title">
       <h2 id="notes-title" class="section-title">Hard parts</h2>
       <ol class="timeline">
+        <li>
+          <p class="when">Projects</p>
+          <div>
+            <h3>Telling projects apart from a domain and a title</h3>
+            <p>The browser only ever sees a domain, so github.com can't say which repo. Shared work sites carry on the project I was on in the last ten minutes, and otherwise count as unassigned work rather than a guess. VS Code normally puts the file name first in its title; one setting puts the workspace name first, so the cleaned title is enough to tell projects apart without recording anything more.</p>
+          </div>
+        </li>
         <li>
           <p class="when">iPhone</p>
           <div>

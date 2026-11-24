@@ -14,7 +14,7 @@
   }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
-  // ====================== 01  A sample week ======================
+  // ====================== 01  Where the week went ======================
   // A seeded generator, so the week is the same on every visit.
   function rng(seed) {
     return function () { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
@@ -28,20 +28,20 @@
 
   var PROFILES = [
     { name: "Monday", date: "2026-11-09", seed: 7, drift: 0.12, comm: 0.08, other: 0.06, len: [12, 45],
-      focus: [["VS Code", 6], ["github.com", 2], ["docs.google.com", 2], ["Slack", 2], ["Terminal", 1]] },
+      focus: [["VS Code · inventory-app", 6], ["github.com", 2], ["docs.google.com", 2], ["Slack", 2], ["Terminal", 1]] },
     { name: "Tuesday", date: "2026-11-10", seed: 21, drift: 0.07, comm: 0.1, other: 0.05, len: [20, 55],
-      focus: [["Teams", 5], ["Outlook", 3], ["docs.google.com", 3], ["VS Code", 2], ["Slack", 2]] },
+      focus: [["Teams", 5], ["Outlook", 3], ["docs.google.com", 2], ["VS Code · inventory-app", 3], ["Slack", 2]] },
     { name: "Wednesday", date: "2026-11-11", seed: 3, drift: 0.24, comm: 0.1, other: 0.08, len: [8, 30], phoneDrift: 0.55,
-      focus: [["VS Code", 4], ["stackoverflow.com", 2], ["github.com", 2], ["Postman", 2], ["Slack", 1]] },
+      focus: [["VS Code · portfolio-site", 4], ["stackoverflow.com", 2], ["github.com", 2], ["Postman", 1], ["Slack", 1]] },
     { name: "Thursday", date: "2026-11-12", seed: 42, drift: 0.05, comm: 0.05, other: 0.04, len: [25, 70],
-      focus: [["VS Code", 7], ["Terminal", 2], ["github.com", 2]], pause: { s: 400, e: 430, scope: "all" } },
+      focus: [["VS Code · inventory-app", 7], ["Terminal", 2], ["github.com", 2]], pause: { s: 400, e: 430, scope: "all" } },
     { name: "Friday", date: "2026-11-13", seed: 15, drift: 0.15, comm: 0.08, other: 0.08, len: [12, 40],
-      focus: [["linkedin.com", 4], ["greenhouse.io", 2], ["myworkdayjobs.com", 2], ["VS Code", 3], ["mail.google.com", 2]] }
+      focus: [["VS Code · portfolio-site", 4], ["github.com", 2], ["mail.google.com", 2], ["Teams", 2], ["VS Code · inventory-app", 2]] }
   ];
   var SPAN = 510, LUNCH = { s: 210, e: 255 };   // 9:00 to 17:30, lunch 12:30 to 13:15
 
   function makeDay(p) {
-    var r = rng(p.seed), segs = [], idle = [], t = 0, prev = null;
+    var r = rng(p.seed), segs = [], idle = [], t = 0, prev = null, anchor = true;  // each session opens on the day's main project
     var stops = [LUNCH].concat(p.pause ? [p.pause] : []);
     function nextStop(t) {
       var s = SPAN;
@@ -50,20 +50,21 @@
     }
     while (t < SPAN - 2) {
       var inStop = stops.filter(function (x) { return t >= x.s && t < x.e; })[0];
-      if (inStop) { t = inStop.e; prev = null; continue; }
+      if (inStop) { t = inStop.e; prev = null; anchor = true; continue; }
       var x = r(), label, len;
       if (x < p.drift && prev !== "drift") { label = weighted(r, [["youtube.com", 3], ["reddit.com", 2]]); len = between(r, 2, 12); prev = "drift"; }
       else if (x < p.drift + p.comm) { label = "web.whatsapp.com"; len = between(r, 2, 8); prev = "comm"; }
       else if (x < p.drift + p.comm + p.other) { label = weighted(r, [["amazon.com", 2], ["Spotify", 1], ["File Explorer", 1]]); len = between(r, 1, 5); prev = "other"; }
       else {
-        do { label = weighted(r, p.focus); } while (segs.length && segs[segs.length - 1][3] === label && p.focus.length > 1);
+        if (anchor) { label = p.focus[0][0]; anchor = false; }
+        else do { label = weighted(r, p.focus); } while (segs.length && segs[segs.length - 1][3] === label && p.focus.length > 1);
         len = between(r, p.len[0], p.len[1]); prev = "focus";
       }
       len = Math.min(len, nextStop(t) - t);
       if (len < 1) { t += 1; continue; }
       segs.push([t, len, "laptop", label]);
       t += len;
-      if (r() < 0.08 && t < SPAN - 15) { var g = between(r, 4, 9); idle.push({ s: t, e: t + g }); t += g; prev = null; }
+      if (r() < 0.08 && t < SPAN - 15) { var g = between(r, 4, 9); idle.push({ s: t, e: t + g }); t += g; prev = null; anchor = true; }
     }
     // The phone: picked up every half hour or so, more often at lunch.
     var pt = between(r, 10, 35);
@@ -85,168 +86,237 @@
   }
   var WEEK = PROFILES.map(makeDay);
 
-  var DEFAULT_CATS = clone(AL.CATEGORIES);
-  var cats = clone(DEFAULT_CATS);
+  var DEFAULT_CONFIG = clone(AL.CONFIG);
+  var cfg = clone(DEFAULT_CONFIG);
   var selected = 0;
+  var UN = AL.UNASSIGNED;
 
   var explorerEl = document.getElementById("al-explorer");
-  var explorer = AL.mount(explorerEl, { day: WEEK[0], categories: cats });
+  var explorer = AL.mount(explorerEl, { day: WEEK[0], config: cfg });
   var dayTitle = document.getElementById("al-day-title");
+
+  function weekStats() {
+    var days = WEEK.map(function (d) { return AL.analyse(AL.prepare(d), cfg); });
+    var total = {}, sum = 0, eps = 0, dist = 0, checks = 0, best = { len: 0 };
+    days.forEach(function (a, i) {
+      Object.keys(a.perProject).forEach(function (p) { total[p] = (total[p] || 0) + a.perProject[p].min; sum += a.perProject[p].min; });
+      eps += a.episodes.length; dist += a.distractions; checks += a.checks;
+      if (a.longest.len > best.len) best = { len: a.longest.len, p: a.longest.p, day: PROFILES[i].name };
+    });
+    return { days: days, total: total, sum: sum, eps: eps, dist: dist, checks: checks, best: best,
+      names: cfg.projects.map(function (p) { return p.name; }) };
+  }
 
   function selectDay(i, scroll) {
     selected = i;
     explorer.setDay(WEEK[i]);
-    dayTitle.textContent = "Attention Ledger · " + PROFILES[i].name + ", sample day";
+    dayTitle.textContent = "Attention Ledger · " + PROFILES[i].name + ", sample data";
     explorerEl.querySelector('input[name="al-day"][value="' + i + '"]').checked = true;
-    drawHeat();
+    drawWeek();
     if (scroll) explorerEl.scrollIntoView({ behavior: still.matches ? "auto" : "smooth", block: "start" });
   }
   explorerEl.querySelectorAll('input[name="al-day"]').forEach(function (inp) {
     inp.addEventListener("change", function () { if (inp.checked) selectDay(+inp.value); });
   });
 
-  // The heat map: focus minutes in each hour, one row per day, one blue hue.
-  var heat = document.getElementById("al-heat");
-  var heatTip = el("div", "al-tip");
-  heatTip.hidden = true;
-  heat.appendChild(heatTip);
-  function drawHeat() {
-    Array.prototype.slice.call(heat.children).forEach(function (c) { if (c !== heatTip) c.remove(); });
-    var grid = el("div", "al-heat-grid");
-    grid.appendChild(el("span", "al-heat-corner"));
-    for (var h = 0; h < 9; h++) {
-      var hr = 9 + h;
-      grid.appendChild(el("span", "al-heat-hour", (hr > 12 ? hr - 12 : hr) + (hr < 12 ? "am" : "pm")));
-    }
-    WEEK.forEach(function (day, i) {
-      var rowName = el("button", "al-heat-day" + (i === selected ? " is-on" : ""), PROFILES[i].name.slice(0, 3));
-      rowName.type = "button";
-      rowName.setAttribute("aria-pressed", i === selected ? "true" : "false");
-      rowName.setAttribute("aria-label", "Open " + PROFILES[i].name);
-      rowName.addEventListener("click", function () { selectDay(i, true); });
-      grid.appendChild(rowName);
-      var hours = AL.focusByHour(AL.prepare(day), cats);
-      hours.forEach(function (m, h) {
-        var cap = h === 8 ? 30 : 60;
-        var share = Math.min(1, m / cap);
-        var step = m === 0 ? 0 : share < 0.25 ? 1 : share < 0.5 ? 2 : share < 0.75 ? 3 : 4;
-        var cell = el("button", "al-heat-cell al-heat-" + step + (i === selected ? " is-on" : ""), String(Math.round(m)));
-        cell.type = "button";
-        var hr = 9 + h, when = (hr > 12 ? hr - 12 : hr) + ":00";
-        var label = PROFILES[i].name + " from " + when + ": " + Math.round(m) + " of " + cap + " minutes on a task";
-        cell.setAttribute("aria-label", label + ". Open this day");
-        function show() {
-          heatTip.textContent = "";
-          heatTip.appendChild(el("strong", null, Math.round(m) + " min focused"));
-          heatTip.appendChild(el("span", null, PROFILES[i].name + ", " + when + (h === 8 ? " to 5:30" : " hour")));
-          heatTip.hidden = false;
-          var box = heat.getBoundingClientRect(), rc = cell.getBoundingClientRect(), w = heatTip.offsetWidth;
-          var x = Math.max(w / 2 + 4, Math.min(box.width - w / 2 - 4, rc.left + rc.width / 2 - box.left));
-          heatTip.style.left = x + "px";
-          heatTip.style.top = (rc.top - box.top - heatTip.offsetHeight - 6) + "px";
-        }
-        cell.addEventListener("pointerenter", show);
-        cell.addEventListener("focus", show);
-        cell.addEventListener("pointerleave", function () { heatTip.hidden = true; });
-        cell.addEventListener("blur", function () { heatTip.hidden = true; });
-        cell.addEventListener("click", function () { selectDay(i, true); });
-        grid.appendChild(cell);
-      });
-    });
-    heat.insertBefore(grid, heatTip);
-    var key = el("p", "al-heat-key");
-    key.appendChild(el("span", null, "Minutes on a task per hour"));
-    var ramp = el("span", "al-heat-ramp");
-    ["0", "1–14", "15–29", "30–44", "45–60"].forEach(function (t, s) {
-      var k = el("span", "al-heat-step");
-      k.appendChild(el("i", "al-heat-" + s));
-      k.appendChild(document.createTextNode(t));
-      ramp.appendChild(k);
-    });
-    key.appendChild(ramp);
-    heat.insertBefore(key, heatTip);
-    drawWeekTiles();
+  // One stacked bar per day, a segment per project, in the same fixed colours as everywhere else.
+  var weekEl = document.getElementById("al-weekbars");
+  var weekTip = el("div", "al-tip");
+  weekTip.hidden = true;
+  weekEl.appendChild(weekTip);
+  function tipAt(node, value, name) {
+    weekTip.textContent = "";
+    weekTip.appendChild(el("strong", null, value));
+    weekTip.appendChild(el("span", null, name));
+    weekTip.hidden = false;
+    var box = weekEl.getBoundingClientRect(), rc = node.getBoundingClientRect(), w = weekTip.offsetWidth;
+    var x = Math.max(w / 2 + 4, Math.min(box.width - w / 2 - 4, rc.left + rc.width / 2 - box.left));
+    weekTip.style.left = x + "px";
+    weekTip.style.top = (rc.top - box.top - weekTip.offsetHeight - 6) + "px";
   }
-
-  function drawWeekTiles() {
-    var box = document.getElementById("al-week-tiles");
-    var on = 0, dis = 0, checks = 0, best = { len: 0 };
-    WEEK.forEach(function (d, i) {
-      var a = AL.analyse(AL.prepare(d), cats);
-      on += a.onTask; dis += a.distractions; checks += a.checks;
-      if (a.longest.len > best.len) best = { len: a.longest.len, day: PROFILES[i].name };
+  function drawWeek() {
+    var st = weekStats();
+    Array.prototype.slice.call(weekEl.children).forEach(function (c) { if (c !== weekTip) c.remove(); });
+    var order = st.names.concat([UN]);
+    var max = Math.max.apply(null, st.days.map(function (a) { return a.tracked; }).concat([1]));
+    var list = el("ol", "al-week-list");
+    st.days.forEach(function (a, i) {
+      var li = el("li", "al-week-row" + (i === selected ? " is-on" : ""));
+      var name = el("button", "al-week-day", PROFILES[i].name.slice(0, 3));
+      name.type = "button";
+      name.setAttribute("aria-pressed", i === selected ? "true" : "false");
+      name.setAttribute("aria-label", "Open " + PROFILES[i].name);
+      name.addEventListener("click", function () { selectDay(i, true); });
+      li.appendChild(name);
+      var track = el("span", "al-week-track");
+      var stack = el("span", "al-week-stack");
+      stack.style.width = (a.tracked / max * 100) + "%";
+      order.forEach(function (p) {
+        var x = a.perProject[p];
+        if (!x || x.min < 1) return;
+        var seg = el("span", "al-week-seg al-c-" + AL.roleOf(p, st.names));
+        seg.style.flexGrow = x.min;
+        var label = p + ", " + PROFILES[i].name;
+        seg.tabIndex = 0;
+        seg.setAttribute("aria-label", label + ": " + AL.hm(x.min));
+        seg.addEventListener("pointerenter", function () { tipAt(seg, AL.hm(x.min), label); });
+        seg.addEventListener("focus", function () { tipAt(seg, AL.hm(x.min), label); });
+        seg.addEventListener("pointerleave", function () { weekTip.hidden = true; });
+        seg.addEventListener("blur", function () { weekTip.hidden = true; });
+        seg.addEventListener("click", function () { selectDay(i, true); });
+        stack.appendChild(seg);
+      });
+      track.appendChild(stack);
+      li.appendChild(track);
+      li.appendChild(el("span", "al-week-total", AL.hm(a.tracked)));
+      list.appendChild(li);
     });
-    box.textContent = "";
-    [["On a task this week", AL.hm(on)], ["Longest focus", AL.hm(best.len), best.day], ["Distractions", String(dis)], ["Phone checks", String(checks)]]
+    weekEl.insertBefore(list, weekTip);
+    var legend = el("ul", "al-legend");
+    order.forEach(function (p) {
+      if (!st.total[p]) return;
+      var k = el("li");
+      k.appendChild(el("span", "al-key al-c-" + AL.roleOf(p, st.names)));
+      k.appendChild(document.createTextNode(p === UN ? "Unassigned work" : p));
+      legend.appendChild(k);
+    });
+    weekEl.insertBefore(legend, weekTip);
+
+    var tiles = document.getElementById("al-week-tiles");
+    tiles.textContent = "";
+    var top = st.names.slice().sort(function (x, y) { return (st.total[y] || 0) - (st.total[x] || 0); })[0];
+    [["Tracked this week", AL.hm(st.sum), "no timers, no entries"],
+      ["Most time on", top || "–", top ? AL.hm(st.total[top]) + " · " + Math.round(st.total[top] / st.sum * 100) + "%" : ""],
+      ["Longest stretch", AL.hm(st.best.len), st.best.len ? st.best.p + ", " + st.best.day : ""],
+      ["Interruptions", String(st.eps), st.dist + " distractions · " + st.checks + " phone checks"]]
       .forEach(function (t) {
         var d = el("div", "al-tile");
         d.appendChild(el("span", "al-tile-label", t[0]));
         d.appendChild(el("span", "al-tile-value", t[1]));
         if (t[2]) d.appendChild(el("span", "al-tile-sub", t[2]));
-        box.appendChild(d);
+        tiles.appendChild(d);
       });
+    drawGuess(st);
   }
 
-  // ====================== 02  Sort it your way ======================
-  var FOCUSABLE = ["work", "career", "communication", "music", "personal", "utility"];
-  var CHOICES = ["work", "career", "communication", "distraction", "music", "personal", "utility", "other"];
+  // ====================== 02  Is it what I thought? ======================
+  // The guesses are the visitor's own. They start where a typical guess lands:
+  // deep work overestimated, meetings and email underestimated.
+  var guessEl = document.getElementById("al-guess"), guessSum = document.getElementById("al-guess-sum");
+  var GUESS_BIAS = [1.45, 1.1, 0.55];
+  var guesses = null;
+  function half(h) { return Math.max(0, Math.round(h * 2) / 2); }
+  function hours(h) { return (h % 1 ? h.toFixed(1) : String(h)) + "h"; }
+  function drawGuess(st) {
+    var names = st.names.filter(function (n) { return st.total[n]; });
+    if (!guesses) {
+      guesses = {};
+      names.forEach(function (n, i) { guesses[n] = half(st.total[n] / 60 * (GUESS_BIAS[i] || 1)); });
+    }
+    guessEl.textContent = "";
+    // A fixed scale per week: twice the biggest real total, so any guess fits.
+    var top = Math.ceil(Math.max.apply(null, names.map(function (n) { return st.total[n] / 60; }).concat([1])) * 2);
+    var rows = [];
+    function summary() {
+      var worst = null;
+      rows.forEach(function (r) { if (!worst || Math.abs(r.diff) > Math.abs(worst.diff)) worst = r; });
+      guessSum.textContent = worst && Math.abs(worst.diff) >= 15
+        ? "Biggest gap: " + worst.n + ", off by " + AL.hm(Math.abs(worst.diff)) + "."
+        : "Your guesses are close this week.";
+    }
+    names.forEach(function (n, i) {
+      if (guesses[n] == null) guesses[n] = half(st.total[n] / 60);
+      var actual = st.total[n];
+      var row = el("div", "al-guess-row");
+      var id = "al-guess-" + i;
+      var lab = el("label", "al-guess-name", n);
+      lab.htmlFor = id;
+      var slider = el("input");
+      slider.type = "range"; slider.min = "0"; slider.max = String(top); slider.step = "0.5"; slider.id = id;
+      var out = el("output", "al-guess-out");
+      out.htmlFor = id;
+      var track = el("span", "al-guess-track");
+      var bar = el("span", "al-guess-bar al-c-" + AL.roleOf(n, st.names));
+      bar.style.width = (actual / 60 / top * 100) + "%";
+      var mark = el("span", "al-guess-mark");
+      track.appendChild(bar);
+      track.appendChild(mark);
+      var diffEl = el("span", "al-guess-diff");
+      var rec = { n: n, diff: 0 };
+      rows.push(rec);
+      function update() {
+        var g = guesses[n];
+        slider.value = String(g);
+        slider.setAttribute("aria-valuetext", "My guess: " + hours(g));
+        out.textContent = "Guess " + hours(g);
+        mark.style.width = Math.min(100, g / top * 100) + "%";
+        rec.diff = actual - g * 60;
+        diffEl.textContent = "Actually " + AL.hm(actual) + ", " + (Math.abs(rec.diff) < 15 ? "about what I'd have guessed"
+          : AL.hm(Math.abs(rec.diff)) + (rec.diff < 0 ? " less" : " more") + " than I'd have guessed");
+      }
+      slider.addEventListener("input", function () { guesses[n] = +slider.value; update(); summary(); });
+      [lab, slider, out, track, diffEl].forEach(function (x) { row.appendChild(x); });
+      guessEl.appendChild(row);
+      update();
+    });
+    summary();
+  }
+
+  // ====================== 03  Your projects, your rules ======================
   var labels = {};
   WEEK.forEach(function (d) { d.segs.forEach(function (s) { labels[s[3]] = (labels[s[3]] || 0) + s[1]; }); });
-  var labelList = Object.keys(labels).sort(function (a, b) { return labels[b] - labels[a]; });
-
-  var focusBox = document.getElementById("al-focus-checks");
+  var labelList = Object.keys(labels).filter(function (l) {
+    var c = cfg.map[l] || cfg.map[l.split(" · ")[0]];
+    return c === "work" || c === "career";
+  }).sort(function (a, b) { return labels[b] - labels[a]; });
   var catList = document.getElementById("al-cat-list");
-  function applyCats() {
-    explorer.setCategories(cats);
-    drawHeat();
+  var carry = document.getElementById("al-carry");
+  function projectOf(label) {
+    var p = cfg.projects.filter(function (x) { return x.match.indexOf(label) >= 0; })[0];
+    return p ? p.name : "";
   }
-  function drawCatControls() {
-    focusBox.textContent = "";
-    FOCUSABLE.forEach(function (c) {
-      var lab = el("label", "al-check");
-      var box = el("input");
-      box.type = "checkbox";
-      box.checked = cats.focus.indexOf(c) >= 0;
-      box.addEventListener("change", function () {
-        cats.focus = FOCUSABLE.filter(function (k) {
-          return k === c ? box.checked : cats.focus.indexOf(k) >= 0;
-        });
-        applyCats();
-      });
-      lab.appendChild(box);
-      lab.appendChild(document.createTextNode(" " + AL.CAT_NAMES[c]));
-      focusBox.appendChild(lab);
-    });
+  function applyConfig() {
+    explorer.setConfig(cfg);
+    drawWeek();
+  }
+  function drawRules() {
     catList.textContent = "";
+    carry.checked = cfg.carry > 0;
     labelList.forEach(function (name, i) {
       var row = el("div", "al-cat-row");
-      var id = "al-cat-" + i;
+      var id = "al-rule-" + i;
       var lab = el("label", "al-cat-name", name);
       lab.htmlFor = id;
       var sel = el("select");
       sel.id = id;
-      CHOICES.forEach(function (c) {
-        var o = el("option", null, AL.CAT_NAMES[c]);
-        o.value = c;
+      cfg.projects.map(function (p) { return p.name; }).concat([""]).forEach(function (p) {
+        var o = el("option", null, p || "No project");
+        o.value = p;
         sel.appendChild(o);
       });
-      sel.value = cats.map[name] || "other";
-      sel.addEventListener("change", function () { cats.map[name] = sel.value; applyCats(); });
+      sel.value = projectOf(name);
+      sel.addEventListener("change", function () {
+        cfg.projects.forEach(function (p) { p.match = p.match.filter(function (m) { return m !== name; }); });
+        if (sel.value) cfg.projects.filter(function (p) { return p.name === sel.value; })[0].match.push(name);
+        applyConfig();
+      });
       row.appendChild(lab);
       row.appendChild(el("span", "al-cat-time", AL.hm(labels[name])));
       row.appendChild(sel);
       catList.appendChild(row);
     });
   }
+  carry.addEventListener("change", function () { cfg.carry = carry.checked ? 10 : 0; applyConfig(); });
   document.getElementById("al-cat-reset").addEventListener("click", function () {
-    cats = clone(DEFAULT_CATS);
-    drawCatControls();
-    applyCats();
+    cfg = clone(DEFAULT_CONFIG);
+    guesses = null;
+    drawRules();
+    applyConfig();
   });
-  drawCatControls();
+  drawRules();
   selectDay(0);
 
-  // ====================== 03  What actually gets stored ======================
+  // ====================== 04  What actually gets stored ======================
   var TWO_PART = ["co", "com", "org", "net", "ac", "gov", "edu"];
   function registrable(host) {
     var parts = host.replace(/^www\./, "").split(".");
@@ -353,7 +423,7 @@
   });
   runFilter();
 
-  // ====================== 04  Does that count? ======================
+  // ====================== 05  What counts as an interruption? ======================
   var rWhat = document.getElementById("al-r-what"), rSecs = document.getElementById("al-r-secs");
   var rOut = document.getElementById("al-r-secs-out"), rStrip = document.getElementById("al-r-strip");
   var rVerdict = document.getElementById("al-r-verdict"), rWhy = document.getElementById("al-r-why");
@@ -370,22 +440,22 @@
     var verdict, why, cls;
     if (dev === "laptop" && s < 3) {
       verdict = "Passing through"; cls = "pass";
-      why = "Anything in front for under 3 seconds is folded into what came before, so this is just more VS Code.";
+      why = "Anything in front for under 3 seconds is folded into what came before, so this is just more time on the inventory app.";
     } else if (cat === "distraction" && s < 10) {
       verdict = "Too short to count"; cls = "pass";
       why = "A distraction has to last 10 seconds or more. A glance doesn't count.";
     } else if (cat === "distraction") {
       verdict = "Distraction"; cls = "drift";
-      why = (dev === "phone" ? "Picking up the phone for " : "Leaving a task for ") + what + ", which is in my distraction category, for 10 seconds or more. It goes in the report with the task I left and what I came back to.";
+      why = (dev === "phone" ? "Picking up the phone for " : "Leaving the inventory app for ") + what + ", which is in my distraction category, for 10 seconds or more. It counts against the inventory app as an interruption and a distraction, with what I came back to.";
     } else if (dev === "phone") {
       verdict = "Phone check"; cls = "check";
-      why = "Picking up the phone during a task for anything else counts as a check, not a distraction. The day's total of checks is one of the report's numbers.";
+      why = "Picking up the phone during project work for anything else counts as a phone check: an interruption to the inventory app, but not a distraction.";
     } else if (s < 60) {
       verdict = "Not counted"; cls = "pass";
       why = "A quick detour on the laptop under a minute, like a search, isn't counted. And coming back within 2 minutes still counts as being on the task.";
     } else {
       verdict = "Detour"; cls = "check";
-      why = "A minute or more on the laptop on something outside my focus categories. It's listed, but it isn't a distraction.";
+      why = "A minute or more on the laptop on something that isn't project work. It counts against the inventory app as an interruption, but not as a distraction.";
     }
     rVerdict.textContent = verdict;
     rVerdict.className = "al-verdict al-verdict-" + cls;
@@ -393,8 +463,8 @@
     // A little strip: task, the excursion to scale, back to the task.
     rStrip.textContent = "";
     var w = Math.max(1.5, Math.min(60, s / 600 * 60));
-    [["focus", 20 + (60 - w) / 2, "VS Code"], [cls === "pass" && dev === "laptop" ? "focus-faint" : cat === "distraction" ? "drift" : cat === "communication" ? "comm" : "other", w, what],
-      ["focus", 20 + (60 - w) / 2, "VS Code"]].forEach(function (b) {
+    [["p1", 20 + (60 - w) / 2, "VS Code"], [cls === "pass" && dev === "laptop" ? "focus-faint" : cat === "distraction" ? "drift" : "other", w, what],
+      ["p1", 20 + (60 - w) / 2, "VS Code"]].forEach(function (b) {
       var seg = el("span", "al-strip-seg al-c-" + b[0]);
       seg.style.flexBasis = b[1] + "%";
       rStrip.appendChild(seg);
@@ -405,7 +475,7 @@
   document.querySelectorAll('input[name="al-r-dev"]').forEach(function (i) { i.addEventListener("change", runRules); });
   runRules();
 
-  // ====================== 05  The format says no ======================
+  // ====================== 06  The format says no ======================
   var EX = {
     ok: { schema_version: 1, ts: "2026-11-09T09:25:30-05:00", device: "laptop", source: "browser-extension", event: "span", app: "msedge.exe", domain: "github.com", duration_s: 240 },
     url: { schema_version: 1, ts: "2026-11-09T09:25:30-05:00", device: "laptop", source: "browser-extension", event: "span", app: "msedge.exe", domain: "github.com", url: "https://github.com/me/private-repo", duration_s: 240 },
@@ -454,7 +524,7 @@
   sIn.addEventListener("input", runSchema);
   loadEx("ok");
 
-  // ====================== 06  Pause one, or all ======================
+  // ====================== 07  Pause one, or all ======================
   var pFrom = document.getElementById("al-p-from"), pGo = document.getElementById("al-p-go");
   var pSteps = document.getElementById("al-p-steps"), pDevices = document.getElementById("al-p-devices");
   var paused = false, timers = [];
